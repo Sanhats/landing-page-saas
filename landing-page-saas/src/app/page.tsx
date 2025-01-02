@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Laptop, Book, Users, Trophy, ArrowRight, Sparkles } from 'lucide-react'
-import { Navbar } from "@/components/Navbar"
+import { Navbar } from "@/components/NavBar"
 
 export default function Home() {
   return (
