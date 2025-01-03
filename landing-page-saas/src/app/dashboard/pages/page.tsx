@@ -7,6 +7,12 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Plus, MoreVertical, Eye, Pencil, Trash2 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 export default function PagesPage() {
   return (
