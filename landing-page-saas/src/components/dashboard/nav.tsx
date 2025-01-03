@@ -1,6 +1,7 @@
 "use client"
 
 import { LayoutDashboard, FileEdit, Settings, Plus } from 'lucide-react'
+import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
@@ -38,36 +39,47 @@ export function DashboardNav() {
   const pathname = usePathname()
 
   return (
-    <Sidebar className="border-r border-[#3A6D8C]/20 bg-[#001F3F]/80 backdrop-blur-sm">
-      <SidebarHeader className="border-b border-[#3A6D8C]/20 p-4">
+    <Sidebar className="border-r border-white/[0.08] bg-secondary/50 backdrop-blur-xl">
+      <SidebarHeader className="border-b border-white/[0.08] p-4">
         <div className="flex items-center justify-between">
-          <span className="bg-gradient-to-r from-[#6A9AB0] to-[#EAD8B1] bg-clip-text text-xl font-bold text-transparent">
+          <Link 
+            href="/dashboard" 
+            className="bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-xl font-bold text-transparent"
+          >
             LandingBuilder
-          </span>
+          </Link>
           <Button
             size="sm"
-            className="bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            asChild
           >
-            <Plus className="mr-2 h-4 w-4" />
-            New Page
+            <Link href="/dashboard/pages/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Page
+            </Link>
           </Button>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[#6A9AB0]">Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-muted-foreground">
+            Navigation
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
+                    asChild
                     active={pathname === item.href}
-                    className={`text-[#6A9AB0] hover:bg-[#3A6D8C]/20 ${
-                      pathname === item.href ? 'bg-[#3A6D8C]/20 text-[#EAD8B1]' : ''
+                    className={`text-muted-foreground transition-colors hover:bg-white/[0.08] hover:text-foreground ${
+                      pathname === item.href ? 'bg-white/[0.08] text-foreground' : ''
                     }`}
                   >
-                    <item.icon className="mr-2 h-4 w-4" />
-                    <span>{item.title}</span>
+                    <Link href={item.href}>
+                      <item.icon className="mr-2 h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -75,7 +87,7 @@ export function DashboardNav() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarRail className="bg-[#3A6D8C]/20" />
+      <SidebarRail className="bg-white/[0.08]" />
     </Sidebar>
   )
 }

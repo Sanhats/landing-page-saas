@@ -1,52 +1,52 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileEdit, Eye, ArrowUpRight } from 'lucide-react'
+import { FileEdit, Eye, TrendingUp } from 'lucide-react'
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight text-[#EAD8B1]">
-        Dashboard
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-[#3A6D8C]/20 bg-[#001F3F]/40 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#EAD8B1]">
+        <Card className="bg-card-gradient backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
               Total Pages
             </CardTitle>
-            <FileEdit className="h-4 w-4 text-[#6A9AB0]" />
+            <FileEdit className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[#EAD8B1]">12</div>
-            <p className="text-xs text-[#6A9AB0]">
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">
               +2 from last month
             </p>
           </CardContent>
         </Card>
-        <Card className="border-[#3A6D8C]/20 bg-[#001F3F]/40 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#EAD8B1]">
+        <Card className="bg-card-gradient backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
               Total Views
             </CardTitle>
-            <Eye className="h-4 w-4 text-[#6A9AB0]" />
+            <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[#EAD8B1]">1,234</div>
-            <p className="text-xs text-[#6A9AB0]">
+            <div className="text-2xl font-bold">1,234</div>
+            <p className="text-xs text-muted-foreground">
               +15% from last month
             </p>
           </CardContent>
         </Card>
-        <Card className="border-[#3A6D8C]/20 bg-[#001F3F]/40 backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[#EAD8B1]">
+        <Card className="bg-card-gradient backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
               Conversion Rate
             </CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-[#6A9AB0]" />
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[#EAD8B1]">2.4%</div>
-            <p className="text-xs text-[#6A9AB0]">
+            <div className="text-2xl font-bold">2.4%</div>
+            <p className="text-xs text-muted-foreground">
               +0.3% from last month
             </p>
           </CardContent>
@@ -54,9 +54,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-7">
-        <Card className="col-span-4 border-[#3A6D8C]/20 bg-[#001F3F]/40 backdrop-blur-sm">
+        <Card className="col-span-4 bg-card-gradient backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-[#EAD8B1]">Recent Pages</CardTitle>
+            <CardTitle>Recent Pages</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-8">
@@ -82,14 +82,14 @@ export default function DashboardPage() {
                   className="flex items-center justify-between"
                 >
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-[#EAD8B1]">
+                    <p className="text-sm font-medium leading-none">
                       {page.title}
                     </p>
-                    <p className="text-sm text-[#6A9AB0]">
+                    <p className="text-sm text-muted-foreground">
                       {page.views} views
                     </p>
                   </div>
-                  <div className="text-sm font-medium text-[#EAD8B1]">
+                  <div className="text-sm font-medium">
                     {page.conversion}
                   </div>
                 </div>
@@ -97,9 +97,9 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3 border-[#3A6D8C]/20 bg-[#001F3F]/40 backdrop-blur-sm">
+        <Card className="col-span-3 bg-card-gradient backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-[#EAD8B1]">Recent Activity</CardTitle>
+            <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-8">
@@ -121,10 +121,10 @@ export default function DashboardPage() {
                   key={index}
                   className="flex items-center justify-between"
                 >
-                  <p className="text-sm text-[#EAD8B1]">
+                  <p className="text-sm">
                     {activity.action}
                   </p>
-                  <p className="text-sm text-[#6A9AB0]">
+                  <p className="text-sm text-muted-foreground">
                     {activity.time}
                   </p>
                 </div>
