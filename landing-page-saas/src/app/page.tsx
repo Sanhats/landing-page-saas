@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Laptop, Book, Users, Trophy, ArrowRight, Sparkles } from 'lucide-react'
-import { Navbar } from "@/components/NavBar"
+import { Navbar } from "@/components/Navbar"
+import Link from "next/link"
 
 export default function Home() {
   return (
@@ -31,10 +32,16 @@ export default function Home() {
           </p>
           
           <div className="mt-10 flex animate-fade-up items-center justify-center gap-x-6 [animation-delay:400ms]">
-            <Button size="lg" className="group relative overflow-hidden rounded-full bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90">
-              <span className="relative flex items-center gap-2">
-                Get Started <Sparkles className="h-4 w-4" />
-              </span>
+            <Button 
+              size="lg" 
+              className="group relative overflow-hidden rounded-full bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90"
+              asChild
+            >
+              <Link href="/auth/signup">
+                <span className="relative flex items-center gap-2">
+                  Get Started <Sparkles className="h-4 w-4" />
+                </span>
+              </Link>
             </Button>
           </div>
         </div>

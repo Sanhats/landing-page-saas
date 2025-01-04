@@ -1,5 +1,5 @@
-import { DashboardNav } from "@/components/dashboard/nav"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { SessionProvider } from "@/components/auth/session-provider"
+import { SideNav } from "@/components/dashboard/side-nav"
 
 export default function DashboardLayout({
   children,
@@ -7,18 +7,12 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-dashboard-gradient">
-      <SidebarProvider>
-        <DashboardNav />
-        <SidebarInset>
-          <main className="flex-1 overflow-y-auto">
-            <div className="container mx-auto p-6">
-              {children}
-            </div>
-          </main>
-        </SidebarInset>
-      </SidebarProvider>
-    </div>
+    <SessionProvider>
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <SideNav />
+        <main className="flex-1 p-8">{children}</main>
+      </div>
+    </SessionProvider>
   )
 }
 

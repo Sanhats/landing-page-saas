@@ -2,11 +2,21 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { Menu, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false)
+  const pathname = usePathname()
+  const { data: session } = useSession()
+
+  const isAuthPage = pathname.startsWith('/auth/')
+
+  if (isAuthPage) {
+    return null
+  }
 
   return (
     <nav className="fixed top-0 z-50 w-full border-b border-[#3A6D8C] bg-[#001F3F]/80 backdrop-blur-sm">
@@ -30,12 +40,22 @@ export function Navbar() {
               <Link href="#pricing" className="text-sm text-muted-foreground hover:text-[#EAD8B1]">
                 Pricing
               </Link>
-              <Button variant="ghost" className="text-sm hover:text-[#EAD8B1]">
-                Sign In
-              </Button>
-              <Button className="text-sm bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90">
-                Get Started
-              </Button>
+              {session ? (
+                <>
+                  <Button variant="ghost" className="text-sm hover:text-[#EAD8B1]" asChild>
+                    <Link href="/dashboard">Dashboard</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="ghost" className="text-sm hover:text-[#EAD8B1]" asChild>
+                    <Link href="/auth/signin">Sign In</Link>
+                  </Button>
+                  <Button className="text-sm bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90" asChild>
+                    <Link href="/auth/signup">Get Started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
           <div className="md:hidden">
@@ -73,12 +93,20 @@ export function Navbar() {
             >
               Pricing
             </Link>
-            <Button variant="ghost" className="w-full justify-start text-base hover:text-[#EAD8B1]">
-              Sign In
-            </Button>
-            <Button className="mt-2 w-full text-base bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90">
-              Get Started
-            </Button>
+            {session ? (
+              <Button variant="ghost" className="w-full justify-start text-base hover:text-[#EAD8B1]" asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" className="w-full justify-start text-base hover:text-[#EAD8B1]" asChild>
+                  <Link href="/auth/signin">Sign In</Link>
+                </Button>
+                <Button className="mt-2 w-full text-base bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90" asChild>
+                  <Link href="/auth/signup">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}

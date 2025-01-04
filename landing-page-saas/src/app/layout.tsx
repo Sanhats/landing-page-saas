@@ -1,10 +1,7 @@
-import { Inter } from 'next/font/google'
-import { getServerSession } from 'next-auth'
-import { headers } from 'next/headers'
-import { SessionProvider } from '@/components/SessionProvider'
-import { AuthProvider } from '@/contexts/AuthContext'
-import type { Metadata } from 'next'
 import './globals.css'
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import { SessionProvider } from "@/components/auth/session-provider"
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -13,18 +10,16 @@ export const metadata: Metadata = {
   description: 'Create beautiful landing pages with ease',
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getServerSession()
-  
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <body className={inter.className}>
-        <SessionProvider session={session}>
-          <AuthProvider>{children}</AuthProvider>
+        <SessionProvider>
+          {children}
         </SessionProvider>
       </body>
     </html>

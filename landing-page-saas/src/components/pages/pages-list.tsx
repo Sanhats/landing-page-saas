@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Eye, MoreVertical, Pencil, Trash2, Globe } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -22,6 +22,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { getUserLandingPages, deleteLandingPage } from "@/lib/api/landing-pages"
+import { formatDate } from "@/lib/utils/date"
 
 type LandingPage = {
   id: string
@@ -29,39 +31,45 @@ type LandingPage = {
   description: string
   status: "draft" | "published"
   views: number
-  url?: string
-  createdAt: string
-  updatedAt: string
+  slug?: string
+  created_at: string
+  updated_at: string
 }
 
 export function PagesList() {
-  const [pages] = useState<LandingPage[]>([
-    {
-      id: "1",
-      title: "Product Launch Page",
-      description: "Landing page for our new product launch",
-      status: "published",
-      views: 1234,
-      url: "product-launch.landingbuilder.app",
-      createdAt: "2024-01-01",
-      updatedAt: "2024-01-02",
-    },
-    {
-      id: "2",
-      title: "Newsletter Signup",
-      description: "Page to collect newsletter subscribers",
-      status: "draft",
-      views: 0,
-      createdAt: "2024-01-03",
-      updatedAt: "2024-01-03",
-    },
-  ])
+  const [pages, setPages] = useState<LandingPage[]>([])
   const [pageToDelete, setPageToDelete] = useState<LandingPage | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    loadPages()
+  }, [])
+
+  const loadPages = async () => {
+    setIsLoading(true)
+    try {
+      const data = await getUserLandingPages()
+      setPages(data)
+    } catch (error) {
+      console.error("Error loading pages:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleDelete = async () => {
     if (!pageToDelete) return
-    // TODO: Implement delete functionality with Supabase
+    try {
+      await deleteLandingPage(pageToDelete.id)
+      setPages(pages.filter(page => page.id !== pageToDelete.id))
+    } catch (error) {
+      console.error("Error deleting page:", error)
+    }
     setPageToDelete(null)
+  }
+
+  if (isLoading) {
+    return <div>Loading...</div>
   }
 
   return (
@@ -98,9 +106,9 @@ export function PagesList() {
                       Preview
                     </Link>
                   </DropdownMenuItem>
-                  {page.status === "published" && (
+                  {page.status === "published" && page.slug && (
                     <DropdownMenuItem asChild>
-                      <Link href={`https://${page.url}`} target="_blank">
+                      <Link href={`/p/${page.slug}`} target="_blank">
                         <Globe className="mr-2 h-4 w-4" />
                         Visit
                       </Link>
@@ -134,7 +142,7 @@ export function PagesList() {
                   </span>
                 </div>
                 <span className="text-sm text-muted-foreground">
-                  Updated {new Date(page.updatedAt).toLocaleDateString()}
+                  Updated {formatDate(page.updated_at)}
                 </span>
               </div>
             </CardContent>

@@ -1,135 +1,92 @@
+'use client'
+
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileEdit, Eye, TrendingUp } from 'lucide-react'
+import { FileText, Users, Activity } from 'lucide-react'
+import { getLandingPagesStats } from '@/lib/api/landing-pages'
+
+type DashboardStats = {
+  totalPages: {
+    current: number
+    change: number
+  }
+  totalViews: {
+    current: number
+    changePercentage: number
+  }
+  activePages: {
+    current: number
+    change: number
+  }
+}
 
 export default function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadStats() {
+      try {
+        const data = await getLandingPagesStats()
+        setStats(data)
+      } catch (error) {
+        console.error('Error loading stats:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadStats()
+  }, [])
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground">
+          Overview of your landing pages and activity
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-card-gradient backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Pages
-            </CardTitle>
-            <FileEdit className="h-4 w-4 text-muted-foreground" />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Pages</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{stats?.totalPages.current}</div>
             <p className="text-xs text-muted-foreground">
-              +2 from last month
+              {stats?.totalPages.change >= 0 ? '+' : ''}{stats?.totalPages.change} from last month
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-card-gradient backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Views
-            </CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Visitors</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
+            <div className="text-2xl font-bold">{stats?.totalViews.current}</div>
             <p className="text-xs text-muted-foreground">
-              +15% from last month
+              {stats?.totalViews.changePercentage >= 0 ? '+' : ''}{stats?.totalViews.changePercentage.toFixed(1)}% from last month
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-card-gradient backdrop-blur-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Conversion Rate
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Pages</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2.4%</div>
+            <div className="text-2xl font-bold">{stats?.activePages.current}</div>
             <p className="text-xs text-muted-foreground">
-              +0.3% from last month
+              {stats?.activePages.change >= 0 ? '+' : ''}{stats?.activePages.change} from last month
             </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-7">
-        <Card className="col-span-4 bg-card-gradient backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Recent Pages</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {[
-                {
-                  title: "Landing Page 1",
-                  views: 123,
-                  conversion: "2.3%",
-                },
-                {
-                  title: "Landing Page 2",
-                  views: 456,
-                  conversion: "3.1%",
-                },
-                {
-                  title: "Landing Page 3",
-                  views: 789,
-                  conversion: "1.8%",
-                },
-              ].map((page, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between"
-                >
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {page.title}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {page.views} views
-                    </p>
-                  </div>
-                  <div className="text-sm font-medium">
-                    {page.conversion}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="col-span-3 bg-card-gradient backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
-              {[
-                {
-                  action: "Created new page",
-                  time: "2 hours ago",
-                },
-                {
-                  action: "Updated Landing Page 2",
-                  time: "4 hours ago",
-                },
-                {
-                  action: "Published Landing Page 1",
-                  time: "1 day ago",
-                },
-              ].map((activity, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between"
-                >
-                  <p className="text-sm">
-                    {activity.action}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {activity.time}
-                  </p>
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
       </div>
