@@ -9,20 +9,39 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { ArrowLeft } from 'lucide-react'
 import Link from "next/link"
+import { createLandingPage } from "@/lib/api/landing-pages"
+import { useToast } from "@/components/ui/use-toast"
 
 export default function NewPage() {
   const router = useRouter()
+  const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
 
+    const formData = new FormData(e.currentTarget)
+    const title = formData.get('title') as string
+    const description = formData.get('description') as string
+
     try {
-      // TODO: Implement create functionality with Supabase
-      router.push("/dashboard/pages")
+      const page = await createLandingPage({ title, description })
+      
+      toast({
+        title: "Success",
+        description: "Landing page created successfully",
+      })
+
+      // Redirect to the editor
+      router.push(`/dashboard/pages/${page.id}/editor`)
     } catch (error) {
       console.error("Error creating page:", error)
+      toast({
+        title: "Error",
+        description: "Failed to create landing page. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }

@@ -95,7 +95,7 @@ export function PagesList() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[160px]">
                   <DropdownMenuItem asChild>
-                    <Link href={`/dashboard/pages/${page.id}`}>
+                    <Link href={`/dashboard/pages/${page.id}/editor`}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit
                     </Link>
