@@ -5,12 +5,12 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Menu, X } from 'lucide-react'
 import { Button } from "@/components/ui/button"
-import { useSession } from "next-auth/react"
+import { useSession } from "@/components/auth/session-provider"
 
 export function Navbar() {
   const [isOpen, setIsOpen] = React.useState(false)
   const pathname = usePathname()
-  const { data: session } = useSession()
+  const { session, loading } = useSession()
 
   const isAuthPage = pathname.startsWith('/auth/')
 
@@ -40,7 +40,7 @@ export function Navbar() {
               <Link href="#pricing" className="text-sm text-muted-foreground hover:text-[#EAD8B1]">
                 Pricing
               </Link>
-              {session ? (
+              {loading ? null : session ? (
                 <>
                   <Button variant="ghost" className="text-sm hover:text-[#EAD8B1]" asChild>
                     <Link href="/dashboard">Dashboard</Link>
@@ -93,7 +93,7 @@ export function Navbar() {
             >
               Pricing
             </Link>
-            {session ? (
+            {loading ? null : session ? (
               <Button variant="ghost" className="w-full justify-start text-base hover:text-[#EAD8B1]" asChild>
                 <Link href="/dashboard">Dashboard</Link>
               </Button>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -11,21 +11,52 @@ import { ArrowLeft } from 'lucide-react'
 import Link from "next/link"
 import { createLandingPage } from "@/lib/api/landing-pages"
 import { useToast } from "@/components/ui/use-toast"
+import { supabase, getCurrentUser } from "@/lib/supabase"
 
 export default function NewPage() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = await getCurrentUser()
+      if (!user) {
+        router.replace('/auth/signin')
+      } else {
+        setIsAuthenticated(true)
+      }
+    }
+    checkAuth()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    
+    if (!isAuthenticated) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a page",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsLoading(true)
 
-    const formData = new FormData(e.currentTarget)
-    const title = formData.get('title') as string
-    const description = formData.get('description') as string
-
     try {
+      const formData = new FormData(e.currentTarget)
+      const title = formData.get('title') as string
+      const description = formData.get('description') as string
+
+      if (!title) {
+        throw new Error('Title is required')
+      }
+
+      // Log para depuración
+      console.log('Submitting form with data:', { title, description })
+
       const page = await createLandingPage({ title, description })
       
       toast({
@@ -33,18 +64,21 @@ export default function NewPage() {
         description: "Landing page created successfully",
       })
 
-      // Redirect to the editor
-      router.push(`/dashboard/pages/${page.id}/editor`)
+      router.replace(`/dashboard/pages/${page.id}/editor`)
     } catch (error) {
       console.error("Error creating page:", error)
       toast({
         title: "Error",
-        description: "Failed to create landing page. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create landing page. Please try again.",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!isAuthenticated) {
+    return <div>Loading...</div>
   }
 
   return (
@@ -88,7 +122,6 @@ export default function NewPage() {
                 id="description"
                 name="description"
                 placeholder="Enter page description"
-                required
                 className="border-white/[0.08] bg-white/[0.02] focus-visible:ring-primary"
               />
             </div>

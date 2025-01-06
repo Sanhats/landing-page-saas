@@ -1,91 +1,88 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card } from '@/components/ui/card'
+import { signIn } from '@/lib/auth'
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
 
-export default function SignIn() {
-  const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
+export default function SignInPage() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+    setIsLoading(true)
 
     try {
-      const result = await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-      })
-
-      if (result?.error) {
-        setError('Invalid credentials')
-        return
+      const { session } = await signIn(email, password)
+      if (session) {
+        // Usar window.location para forzar un refresh completo
+        window.location.href = '/dashboard'
       }
-
-      router.push('/dashboard')
     } catch (error) {
-      setError('An error occurred. Please try again.')
+      console.error('Sign in error:', error)
+      toast({
+        title: "Error",
+        description: "Failed to sign in. Please check your credentials.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md border-[#3A6D8C] bg-[#001F3F]/50 p-6">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold tracking-tight text-[#EAD8B1]">
-            Sign in to your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#EAD8B1]">
-                Email address
-              </label>
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>Sign In</CardTitle>
+          <CardDescription>Enter your credentials to access your account</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
                 required
-                className="mt-1 border-[#3A6D8C] bg-[#001F3F]/50 focus:border-[#6A9AB0]"
               />
             </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#EAD8B1]">
-                Password
-              </label>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                name="password"
                 type="password"
-                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
                 required
-                className="mt-1 border-[#3A6D8C] bg-[#001F3F]/50 focus:border-[#6A9AB0]"
               />
             </div>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-[#EAD8B1] text-[#001F3F] hover:bg-[#EAD8B1]/90"
-          >
-            Sign in
-          </Button>
+          </CardContent>
+          <CardFooter className="flex justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isLoading}
+            >
+              Sign Up
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
+          </CardFooter>
         </form>
       </Card>
     </div>
   )
 }
+

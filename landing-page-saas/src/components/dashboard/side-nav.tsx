@@ -1,11 +1,12 @@
 "use client"
 
 import { usePathname, useRouter } from "next/navigation"
-import { signOut, useSession } from "next-auth/react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, FileText, Settings, LogOut } from 'lucide-react'
+import { signOut } from "@/lib/auth"
+import { useToast } from "@/components/ui/use-toast"
 
 const routes = [
   {
@@ -31,11 +32,21 @@ const routes = [
 export function SideNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { data: session } = useSession()
+  const { toast } = useToast()
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false })
-    router.push('/auth/signin')
+    try {
+      await signOut()
+      router.push('/auth/signin')
+      router.refresh()
+    } catch (error) {
+      console.error('Error signing out:', error)
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -63,17 +74,12 @@ export function SideNav() {
             </Button>
           ))}
         </nav>
-        {session?.user && (
-          <div className="flex flex-col gap-2 border-t pt-4">
-            <p className="px-2 text-sm text-gray-500">
-              Signed in as: {session.user.email}
-            </p>
-            <Button variant="ghost" className="justify-start" onClick={handleSignOut}>
-              <LogOut className="mr-2 h-5 w-5" />
-              Logout
-            </Button>
-          </div>
-        )}
+        <div className="flex flex-col gap-2 border-t pt-4">
+          <Button variant="ghost" className="justify-start" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-5 w-5" />
+            Logout
+          </Button>
+        </div>
       </div>
     </div>
   )
