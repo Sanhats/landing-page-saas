@@ -2,7 +2,6 @@ export type ComponentType =
   | 'hero'
   | 'features'
   | 'content'
-  | 'cta'
   | 'testimonials'
   | 'pricing'
   | 'faq'

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { getUserLandingPages, deleteLandingPage } from "@/lib/api/landing-pages"
 import { formatDate } from "@/lib/utils/date"
+import { useToast } from "@/components/ui/use-toast"
 
 type LandingPage = {
   id: string
@@ -40,6 +41,7 @@ export function PagesList() {
   const [pages, setPages] = useState<LandingPage[]>([])
   const [pageToDelete, setPageToDelete] = useState<LandingPage | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const { toast } = useToast()
 
   useEffect(() => {
     loadPages()
@@ -52,6 +54,11 @@ export function PagesList() {
       setPages(data)
     } catch (error) {
       console.error("Error loading pages:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load pages. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -62,14 +69,27 @@ export function PagesList() {
     try {
       await deleteLandingPage(pageToDelete.id)
       setPages(pages.filter(page => page.id !== pageToDelete.id))
+      toast({
+        title: "Success",
+        description: "Page deleted successfully.",
+      })
     } catch (error) {
       console.error("Error deleting page:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete page. Please try again.",
+        variant: "destructive",
+      })
     }
     setPageToDelete(null)
   }
 
   if (isLoading) {
     return <div>Loading...</div>
+  }
+
+  if (pages.length === 0) {
+    return <div>No pages found. Create your first landing page!</div>
   }
 
   return (

@@ -4,8 +4,18 @@ import { Input } from "@/components/ui/input"
 import { Laptop, Book, Users, Trophy, ArrowRight, Sparkles } from 'lucide-react'
 import { Navbar } from "@/components/Navbar"
 import Link from "next/link"
+import { redirect } from 'next/navigation'
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createServerComponentClient({ cookies })
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (session) {
+    redirect('/dashboard')
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />

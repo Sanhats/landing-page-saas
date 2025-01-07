@@ -11,10 +11,8 @@ export async function createLandingPage(data: {
       throw new Error('Authentication required')
     }
 
-    // Log para depuración
     console.log('Creating page with user:', user.id)
 
-    // Create the page
     const { data: page, error } = await supabase
       .from('landing_pages')
       .insert([
@@ -31,7 +29,6 @@ export async function createLandingPage(data: {
       .single()
 
     if (error) {
-      // Log detallado del error
       console.error('Supabase error:', {
         error,
         user: user.id,

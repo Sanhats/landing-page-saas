@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
+import { createClientSideSupabaseClient } from '@/lib/supabase'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,6 +13,7 @@ export default function SignInPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,16 +21,28 @@ export default function SignInPage() {
     setIsLoading(true)
 
     try {
-      const { session } = await signIn(email, password)
-      if (session) {
-        // Usar window.location para forzar un refresh completo
-        window.location.href = '/dashboard'
+      console.log('Attempting to sign in...')
+      const supabase = createClientSideSupabaseClient()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) throw error
+
+      console.log('Sign in successful:', data)
+
+      if (data.session) {
+        console.log('Valid session obtained, redirecting...')
+        router.push('/dashboard')
+      } else {
+        throw new Error('No session obtained after sign in')
       }
     } catch (error) {
       console.error('Sign in error:', error)
       toast({
         title: "Error",
-        description: "Failed to sign in. Please check your credentials.",
+        description: error instanceof Error ? error.message : "Failed to sign in",
         variant: "destructive",
       })
     } finally {
@@ -72,6 +86,7 @@ export default function SignInPage() {
             <Button
               type="button"
               variant="outline"
+              onClick={() => router.push('/auth/signup')}
               disabled={isLoading}
             >
               Sign Up

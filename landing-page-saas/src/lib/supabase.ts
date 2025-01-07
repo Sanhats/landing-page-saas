@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -12,32 +13,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    storageKey: 'supabase-auth',
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined
-  },
-  db: {
-    schema: 'public'
   }
 })
 
-export async function getCurrentSession() {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession()
-    if (error) throw error
-    return session
-  } catch (error) {
-    console.error('Error getting session:', error)
-    return null
-  }
-}
+export const createClientSideSupabaseClient = () => createClientComponentClient()
 
 export async function getCurrentUser() {
-  try {
-    const session = await getCurrentSession()
-    return session?.user ?? null
-  } catch (error) {
-    console.error('Error getting user:', error)
-    return null
-  }
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
+}
+
+export async function hasValidSession() {
+  const { data: { session }, error } = await supabase.auth.getSession()
+  console.log('Checking session:', session ? 'Valid session found' : 'No valid session')
+  if (error) console.error('Session check error:', error)
+  return !!session
 }
 

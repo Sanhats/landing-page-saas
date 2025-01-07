@@ -3,19 +3,43 @@
 import { useDroppable } from "@dnd-kit/core"
 import { ComponentType, EditorComponent } from "@/types/editor"
 import { cn } from "@/lib/utils"
+import { HeroTemplate } from "./templates/hero-template"
+import { FeaturesTemplate } from "./templates/features-template"
 
 interface EditorCanvasProps {
   components: EditorComponent[]
   onDrop: (type: ComponentType) => void
+  onEdit: (id: string) => void
 }
 
-export function EditorCanvas({ components, onDrop }: EditorCanvasProps) {
+export function EditorCanvas({ components, onDrop, onEdit }: EditorCanvasProps) {
   const {isOver, setNodeRef} = useDroppable({
     id: 'editor-canvas',
     data: {
       accepts: ['component']
     }
   })
+
+  const renderComponent = (component: EditorComponent) => {
+    switch (component.type) {
+      case 'hero':
+        return (
+          <HeroTemplate
+            content={component.content}
+            onEdit={() => onEdit(component.id)}
+          />
+        )
+      case 'features':
+        return (
+          <FeaturesTemplate
+            content={component.content}
+            onEdit={() => onEdit(component.id)}
+          />
+        )
+      default:
+        return null
+    }
+  }
 
   return (
     <div 
@@ -33,8 +57,7 @@ export function EditorCanvas({ components, onDrop }: EditorCanvasProps) {
       )}
       {components.map((component) => (
         <div key={component.id} className="mb-4">
-          {/* Aquí renderizaremos los componentes editables */}
-          <pre>{JSON.stringify(component, null, 2)}</pre>
+          {renderComponent(component)}
         </div>
       ))}
     </div>
