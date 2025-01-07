@@ -34,7 +34,7 @@ export default async function Home() {
           <div className="absolute -bottom-48 left-1/2 -z-10 h-96 w-96 -translate-x-1/2 rounded-full bg-[#6A9AB0]/20 blur-3xl" />
           
           <h1 className="animate-fade-up bg-gradient-to-r from-[#6A9AB0] via-[#3A6D8C] to-[#EAD8B1] bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-6xl">
-            Unlock Your Ultimate Knowledge Potential
+            Unlock Your Ultimate KnowledgePotential
           </h1>
           
           <p className="mt-6 animate-fade-up text-lg leading-8 text-muted-foreground [animation-delay:200ms]">
