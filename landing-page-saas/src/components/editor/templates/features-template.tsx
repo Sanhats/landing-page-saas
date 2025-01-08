@@ -47,11 +47,11 @@ export function FeaturesTemplate({ content, onEdit }: FeaturesTemplateProps) {
         
         <div className="mx-auto mt-16 max-w-7xl sm:mt-20 lg:mt-24">
           <div className="grid grid-cols-1 gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {content.features.map((feature) => {
+            {content.features.map((feature, index) => {
               const Icon = icons[feature.icon]
               return (
                 <Card 
-                  key={feature.title}
+                  key={index}
                   className="group relative overflow-hidden border-[#3A6D8C] bg-[#001F3F]/50 transition-all duration-300 hover:scale-105 hover:bg-[#001F3F]/80"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-[#3A6D8C]/10 to-[#6A9AB0]/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -69,12 +69,12 @@ export function FeaturesTemplate({ content, onEdit }: FeaturesTemplateProps) {
       
       {onEdit && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           className="absolute right-4 top-4"
           onClick={onEdit}
         >
-          Edit
+          Edit Features
         </Button>
       )}
     </section>

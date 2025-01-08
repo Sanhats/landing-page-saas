@@ -41,12 +41,12 @@ export function HeroTemplate({ content, onEdit }: HeroTemplateProps) {
       
       {onEdit && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           className="absolute right-4 top-4"
           onClick={onEdit}
         >
-          Edit
+          Edit Hero
         </Button>
       )}
     </section>

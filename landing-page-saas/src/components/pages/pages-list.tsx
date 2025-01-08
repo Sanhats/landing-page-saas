@@ -25,6 +25,8 @@ import {
 import { getUserLandingPages, deleteLandingPage } from "@/lib/api/landing-pages"
 import { formatDate } from "@/lib/utils/date"
 import { useToast } from "@/components/ui/use-toast"
+import { useRouter } from 'next/navigation'
+import { createClientSideSupabaseClient } from '@/lib/supabase'
 
 type LandingPage = {
   id: string
@@ -42,10 +44,23 @@ export function PagesList() {
   const [pageToDelete, setPageToDelete] = useState<LandingPage | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
+  const router = useRouter()
 
   useEffect(() => {
-    loadPages()
-  }, [])
+    const checkAuthAndLoadPages = async () => {
+      const supabase = createClientSideSupabaseClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        router.push('/auth/signin')
+        return
+      }
+
+      loadPages()
+    }
+
+    checkAuthAndLoadPages()
+  }, [router])
 
   const loadPages = async () => {
     setIsLoading(true)

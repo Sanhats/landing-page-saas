@@ -1,4 +1,5 @@
-import { supabase, getCurrentUser } from '@/lib/supabase'
+import { supabase, getCurrentUser, createClientSideSupabaseClient } from '@/lib/supabase'
+import { EditorComponent } from '@/types/editor'
 
 export async function createLandingPage(data: {
   title: string
@@ -54,7 +55,8 @@ export async function createLandingPage(data: {
 
 export async function getUserLandingPages() {
   try {
-    const user = await getCurrentUser()
+    const supabase = createClientSideSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       throw new Error('Authentication required')
@@ -138,6 +140,63 @@ export async function getLandingPagesStats() {
     }
   } catch (error) {
     console.error('Error fetching landing pages stats:', error)
+    throw error
+  }
+}
+
+export async function getLandingPage(id: string) {
+  try {
+    const supabase = createClientSideSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data, error } = await supabase
+      .from('landing_pages')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching landing page:', error)
+      throw error
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error fetching landing page:', error)
+    throw error
+  }
+}
+
+export async function updateLandingPage(id: string, updates: { content?: EditorComponent[] }) {
+  try {
+    const supabase = createClientSideSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    
+    if (!user) {
+      throw new Error('Authentication required')
+    }
+
+    const { data, error } = await supabase
+      .from('landing_pages')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating landing page:', error)
+      throw error
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error updating landing page:', error)
     throw error
   }
 }
