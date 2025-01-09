@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Laptop, Book, Users, Trophy, ArrowRight, Sparkles } from 'lucide-react'
-import { Navbar } from "@/components/Navbar"
 import Link from "next/link"
+import { Navbar } from "@/components/Navbar"
 import { redirect } from 'next/navigation'
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'

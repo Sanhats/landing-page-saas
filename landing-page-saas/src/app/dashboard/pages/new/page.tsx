@@ -129,7 +129,7 @@ export default function NewPage() {
               className="border-white/[0.08] hover:bg-white/[0.08]"
               asChild
             >
-              <Link href="/dashboard/pages">Cancel</Link>
+              <Link href="/dashboard/pages">Cancelar</Link>
             </Button>
             <Button
               type="submit"
