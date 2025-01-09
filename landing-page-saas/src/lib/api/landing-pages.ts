@@ -1,12 +1,145 @@
 import { supabase, getCurrentUser, createClientSideSupabaseClient } from '@/lib/supabase'
 import { EditorComponent } from '@/types/editor'
 
+const defaultComponents: EditorComponent[] = [
+  {
+    id: 'hero-1',
+    type: 'hero',
+    content: {
+      title: 'Welcome to our platform',
+      description: 'The best solution for your needs',
+      buttonText: 'Get Started'
+    }
+  },
+  {
+    id: 'features-1',
+    type: 'features',
+    content: {
+      title: 'Our Features',
+      description: 'Everything you need to succeed',
+      features: [
+        {
+          title: 'Easy to Use',
+          description: 'Simple and intuitive interface',
+          icon: 'Laptop'
+        },
+        {
+          title: 'Documentation',
+          description: 'Comprehensive guides',
+          icon: 'Book'
+        },
+        {
+          title: 'Team Work',
+          description: 'Collaborate effectively',
+          icon: 'Users'
+        },
+        {
+          title: 'Results',
+          description: 'Achieve your goals',
+          icon: 'Trophy'
+        }
+      ]
+    }
+  },
+  {
+    id: 'content-1',
+    type: 'content',
+    content: {
+      title: 'About Us',
+      description: 'Learn more about our mission and values',
+      imageUrl: '/placeholder.svg'
+    }
+  },
+  {
+    id: 'testimonials-1',
+    type: 'testimonials',
+    content: {
+      title: 'What Our Customers Say',
+      testimonials: [
+        {
+          content: 'Amazing platform! It has transformed our workflow.',
+          author: 'John Doe',
+          role: 'CEO at TechCorp'
+        },
+        {
+          content: 'The best solution we have found in the market.',
+          author: 'Jane Smith',
+          role: 'CTO at StartupX'
+        },
+        {
+          content: 'Incredible support and features.',
+          author: 'Mike Johnson',
+          role: 'Product Manager'
+        }
+      ]
+    }
+  },
+  {
+    id: 'pricing-1',
+    type: 'pricing',
+    content: {
+      title: 'Pricing Plans',
+      description: 'Choose the perfect plan for your needs',
+      plans: [
+        {
+          name: 'Starter',
+          price: '$9/month',
+          description: 'Perfect for getting started',
+          features: ['Basic features', '5 projects', 'Basic support']
+        },
+        {
+          name: 'Pro',
+          price: '$29/month',
+          description: 'For growing businesses',
+          features: ['Advanced features', 'Unlimited projects', 'Priority support']
+        },
+        {
+          name: 'Enterprise',
+          price: 'Custom',
+          description: 'For large organizations',
+          features: ['Custom features', 'Dedicated support', 'Custom integration']
+        }
+      ]
+    }
+  },
+  {
+    id: 'faq-1',
+    type: 'faq',
+    content: {
+      title: 'Frequently Asked Questions',
+      faqs: [
+        {
+          question: 'How do I get started?',
+          answer: 'Simply sign up for an account and follow our quick start guide.'
+        },
+        {
+          question: 'What payment methods do you accept?',
+          answer: 'We accept all major credit cards and PayPal.'
+        },
+        {
+          question: 'Can I cancel my subscription?',
+          answer: 'Yes, you can cancel your subscription at any time.'
+        }
+      ]
+    }
+  },
+  {
+    id: 'contact-1',
+    type: 'contact',
+    content: {
+      title: 'Contact Us',
+      description: 'Get in touch with our team'
+    }
+  }
+]
+
 export async function createLandingPage(data: {
   title: string
   description?: string
 }) {
   try {
-    const user = await getCurrentUser()
+    const supabase = createClientSideSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       throw new Error('Authentication required')
@@ -22,7 +155,7 @@ export async function createLandingPage(data: {
           description: data.description || '',
           user_id: user.id,
           status: 'draft',
-          content: [],
+          content: defaultComponents,
           views: 0
         }
       ])
@@ -30,15 +163,7 @@ export async function createLandingPage(data: {
       .single()
 
     if (error) {
-      console.error('Supabase error:', {
-        error,
-        user: user.id,
-        data: {
-          title: data.title,
-          description: data.description,
-          user_id: user.id
-        }
-      })
+      console.error('Supabase error:', error)
       throw error
     }
 
@@ -82,7 +207,8 @@ export async function getUserLandingPages() {
 
 export async function deleteLandingPage(id: string) {
   try {
-    const user = await getCurrentUser()
+    const supabase = createClientSideSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       throw new Error('Authentication required')
@@ -103,7 +229,8 @@ export async function deleteLandingPage(id: string) {
 
 export async function getLandingPagesStats() {
   try {
-    const user = await getCurrentUser()
+    const supabase = createClientSideSupabaseClient()
+    const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       throw new Error('Authentication required')
@@ -146,6 +273,7 @@ export async function getLandingPagesStats() {
 
 export async function getLandingPage(id: string) {
   try {
+    console.log('Fetching landing page with ID:', id)
     const supabase = createClientSideSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -165,15 +293,18 @@ export async function getLandingPage(id: string) {
       throw error
     }
 
+    console.log('Landing page data:', data)
     return data
   } catch (error) {
-    console.error('Error fetching landing page:', error)
+    console.error('Error in getLandingPage:', error)
     throw error
   }
 }
 
 export async function updateLandingPage(id: string, updates: { content?: EditorComponent[] }) {
   try {
+    console.log('Updating landing page:', id)
+    console.log('Updates:', updates)
     const supabase = createClientSideSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
     
@@ -194,9 +325,10 @@ export async function updateLandingPage(id: string, updates: { content?: EditorC
       throw error
     }
 
+    console.log('Update successful:', data)
     return data
   } catch (error) {
-    console.error('Error updating landing page:', error)
+    console.error('Error in updateLandingPage:', error)
     throw error
   }
 }

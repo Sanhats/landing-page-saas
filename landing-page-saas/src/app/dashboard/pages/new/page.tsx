@@ -11,7 +11,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from "next/link"
 import { createLandingPage } from "@/lib/api/landing-pages"
 import { useToast } from "@/components/ui/use-toast"
-import { supabase, getCurrentUser } from "@/lib/supabase"
+import { getCurrentUser } from "@/lib/supabase"
 
 export default function NewPage() {
   const router = useRouter()
@@ -54,9 +54,6 @@ export default function NewPage() {
         throw new Error('Title is required')
       }
 
-      // Log para depuración
-      console.log('Submitting form with data:', { title, description })
-
       const page = await createLandingPage({ title, description })
       
       toast({
@@ -64,7 +61,7 @@ export default function NewPage() {
         description: "Landing page created successfully",
       })
 
-      router.replace(`/dashboard/pages/${page.id}/editor`)
+      router.push(`/dashboard/pages/${page.id}/editor`)
     } catch (error) {
       console.error("Error creating page:", error)
       toast({

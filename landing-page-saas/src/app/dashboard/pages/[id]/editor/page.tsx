@@ -16,130 +16,137 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/use-toast"
 import { useParams } from "next/navigation"
 import { getLandingPage, updateLandingPage } from "@/lib/api/landing-pages"
+import { Card, CardContent } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 const defaultComponents: EditorComponent[] = [
   {
-    id: "hero-1",
-    type: "hero",
+    id: '1',
+    type: 'hero',
     content: {
       title: 'Welcome to our platform',
-      description: 'This is a sample hero section. Edit me!',
+      description: 'The best solution for your needs',
       buttonText: 'Get Started'
     }
   },
   {
-    id: "features-1",
-    type: "features",
+    id: '2',
+    type: 'features',
     content: {
-      title: 'Amazing Features',
-      description: 'Discover what makes us special',
+      title: 'Our Features',
+      description: 'Everything you need to succeed',
       features: [
         {
-          title: "Easy to Use",
-          description: "Simple and intuitive interface",
-          icon: "Laptop"
+          title: 'Easy to Use',
+          description: 'Simple and intuitive interface',
+          icon: 'Laptop'
         },
         {
-          title: "Documentation",
-          description: "Comprehensive guides",
-          icon: "Book"
+          title: 'Documentation',
+          description: 'Comprehensive guides',
+          icon: 'Book'
         },
         {
-          title: "Team Work",
-          description: "Collaborate effectively",
-          icon: "Users"
+          title: 'Team Work',
+          description: 'Collaborate effectively',
+          icon: 'Users'
         },
         {
-          title: "Results",
-          description: "Achieve your goals",
-          icon: "Trophy"
+          title: 'Results',
+          description: 'Achieve your goals',
+          icon: 'Trophy'
         }
       ]
     }
   },
   {
-    id: "content-1",
-    type: "content",
+    id: '3',
+    type: 'content',
     content: {
-      title: 'About Our Platform',
-      description: 'Learn more about what we offer and how it can benefit you.',
-      imageUrl: '/placeholder.svg?height=400&width=600'
+      title: 'About Us',
+      description: 'Learn more about our mission and values',
+      imageUrl: '/placeholder.svg'
     }
   },
   {
-    id: "testimonials-1",
-    type: "testimonials",
+    id: '4',
+    type: 'testimonials',
     content: {
       title: 'What Our Customers Say',
       testimonials: [
         {
-          content: "This platform has revolutionized the way we work. Highly recommended!",
-          author: "Jane Doe",
-          role: "CEO, Tech Corp"
+          content: 'Amazing platform! It has transformed our workflow.',
+          author: 'John Doe',
+          role: 'CEO at TechCorp'
         },
         {
-          content: "Easy to use and incredibly powerful. It's a game-changer for our team.",
-          author: "John Smith",
-          role: "Project Manager, Innovate Inc"
+          content: 'The best solution we have found in the market.',
+          author: 'Jane Smith',
+          role: 'CTO at StartupX'
+        },
+        {
+          content: 'Incredible support and features.',
+          author: 'Mike Johnson',
+          role: 'Product Manager'
         }
       ]
     }
   },
   {
-    id: "pricing-1",
-    type: "pricing",
+    id: '5',
+    type: 'pricing',
     content: {
-      title: 'Simple, Transparent Pricing',
-      description: 'Choose the plan that works best for you and your team.',
+      title: 'Pricing Plans',
+      description: 'Choose the perfect plan for your needs',
       plans: [
         {
-          name: 'Basic',
-          price: '$9.99/mo',
-          description: 'Perfect for individuals and small teams',
-          features: ['Up to 5 users', '10GB storage', 'Basic support']
+          name: 'Starter',
+          price: '$9/month',
+          description: 'Perfect for getting started',
+          features: ['Basic features', '5 projects', 'Basic support']
         },
         {
           name: 'Pro',
-          price: '$19.99/mo',
-          description: 'Great for growing teams and businesses',
-          features: ['Up to 20 users', '50GB storage', 'Priority support', 'Advanced analytics']
+          price: '$29/month',
+          description: 'For growing businesses',
+          features: ['Advanced features', 'Unlimited projects', 'Priority support']
         },
         {
           name: 'Enterprise',
           price: 'Custom',
-          description: 'For large organizations with specific needs',
-          features: ['Unlimited users', 'Unlimited storage', '24/7 dedicated support', 'Custom integrations']
+          description: 'For large organizations',
+          features: ['Custom features', 'Dedicated support', 'Custom integration']
         }
       ]
     }
   },
   {
-    id: "faq-1",
-    type: "faq",
+    id: '6',
+    type: 'faq',
     content: {
       title: 'Frequently Asked Questions',
       faqs: [
         {
-          question: "How do I get started?",
-          answer: "Simply sign up for an account and follow our easy onboarding process. You'll be up and running in no time!"
+          question: 'How do I get started?',
+          answer: 'Simply sign up for an account and follow our quick start guide.'
         },
         {
-          question: "Is there a free trial available?",
-          answer: "Yes, we offer a 14-day free trial for all new users. No credit card required."
+          question: 'What payment methods do you accept?',
+          answer: 'We accept all major credit cards and PayPal.'
         },
         {
-          question: "Can I upgrade or downgrade my plan at any time?",
-          answer: "You can change your plan at any time, and the changes will be reflected in your next billing cycle."
+          question: 'Can I cancel my subscription?',
+          answer: 'Yes, you can cancel your subscription at any time.'
         }
       ]
     }
   },
   {
-    id: "contact-1",
-    type: "contact",
+    id: '7',
+    type: 'contact',
     content: {
-      title: 'Get in Touch',
-      description: 'Have questions or need support? Reach out to us and we\'ll be happy to help.'
+      title: 'Contact Us',
+      description: 'Get in touch with our team'
     }
   }
 ]
@@ -156,11 +163,19 @@ export default function EditorPage() {
     const loadPage = async () => {
       setIsLoading(true)
       try {
+        console.log('Loading page...')
         const page = await getLandingPage(pageId)
-        if (page && page.content && page.content.length > 0) {
+        console.log('Page loaded:', page)
+        console.log('Page content:', page?.content)
+        if (page && page.content && Array.isArray(page.content) && page.content.length > 0) {
+          console.log('Using page content from database')
           setComponents(page.content as EditorComponent[])
         } else {
+          console.log('No content found, using default components')
+          console.log('Default components:', defaultComponents)
           setComponents(defaultComponents)
+          // Save default components to the database
+          await updateLandingPage(pageId, { content: defaultComponents })
         }
       } catch (error) {
         console.error("Error loading page:", error)
@@ -176,6 +191,10 @@ export default function EditorPage() {
     }
     loadPage()
   }, [pageId, toast])
+
+  useEffect(() => {
+    console.log('Current components:', components)
+  }, [components])
 
   const handleEdit = (id: string) => {
     const component = components.find(c => c.id === id)
@@ -213,6 +232,416 @@ export default function EditorPage() {
     return <div>Loading...</div>
   }
 
+  const renderEditingForm = () => {
+    if (!editingComponent) return null
+
+    switch (editingComponent.type) {
+      case 'hero':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={editingComponent.content.description}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, description: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="buttonText">Button Text</Label>
+              <Input
+                id="buttonText"
+                value={editingComponent.content.buttonText}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, buttonText: e.target.value }
+                })}
+              />
+            </div>
+          </div>
+        )
+
+      case 'features':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="features-title">Section Title</Label>
+              <Input
+                id="features-title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="features-description">Section Description</Label>
+              <Textarea
+                id="features-description"
+                value={editingComponent.content.description}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, description: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Features</Label>
+              {editingComponent.content.features.map((feature, index) => (
+                <Card key={index} className="p-4">
+                  <CardContent className="p-0 space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor={`feature-${index}-title`}>Title</Label>
+                      <Input
+                        id={`feature-${index}-title`}
+                        value={feature.title}
+                        onChange={(e) => {
+                          const newFeatures = [...editingComponent.content.features];
+                          newFeatures[index] = { ...newFeatures[index], title: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, features: newFeatures }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`feature-${index}-description`}>Description</Label>
+                      <Textarea
+                        id={`feature-${index}-description`}
+                        value={feature.description}
+                        onChange={(e) => {
+                          const newFeatures = [...editingComponent.content.features];
+                          newFeatures[index] = { ...newFeatures[index], description: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, features: newFeatures }
+                          });
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 'content':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="content-title">Title</Label>
+              <Input
+                id="content-title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="content-description">Description</Label>
+              <Textarea
+                id="content-description"
+                value={editingComponent.content.description}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, description: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="content-imageUrl">Image URL</Label>
+              <Input
+                id="content-imageUrl"
+                value={editingComponent.content.imageUrl}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, imageUrl: e.target.value }
+                })}
+              />
+            </div>
+          </div>
+        )
+
+      case 'testimonials':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="testimonials-title">Section Title</Label>
+              <Input
+                id="testimonials-title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Testimonials</Label>
+              {editingComponent.content.testimonials.map((testimonial, index) => (
+                <Card key={index} className="p-4">
+                  <CardContent className="p-0 space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor={`testimonial-${index}-content`}>Content</Label>
+                      <Textarea
+                        id={`testimonial-${index}-content`}
+                        value={testimonial.content}
+                        onChange={(e) => {
+                          const newTestimonials = [...editingComponent.content.testimonials];
+                          newTestimonials[index] = { ...newTestimonials[index], content: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, testimonials: newTestimonials }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`testimonial-${index}-author`}>Author</Label>
+                      <Input
+                        id={`testimonial-${index}-author`}
+                        value={testimonial.author}
+                        onChange={(e) => {
+                          const newTestimonials = [...editingComponent.content.testimonials];
+                          newTestimonials[index] = { ...newTestimonials[index], author: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, testimonials: newTestimonials }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`testimonial-${index}-role`}>Role</Label>
+                      <Input
+                        id={`testimonial-${index}-role`}
+                        value={testimonial.role}
+                        onChange={(e) => {
+                          const newTestimonials = [...editingComponent.content.testimonials];
+                          newTestimonials[index] = { ...newTestimonials[index], role: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, testimonials: newTestimonials }
+                          });
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 'pricing':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="pricing-title">Section Title</Label>
+              <Input
+                id="pricing-title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="pricing-description">Section Description</Label>
+              <Textarea
+                id="pricing-description"
+                value={editingComponent.content.description}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, description: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>Pricing Plans</Label>
+              {editingComponent.content.plans.map((plan, index) => (
+                <Card key={index} className="p-4">
+                  <CardContent className="p-0 space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor={`plan-${index}-name`}>Plan Name</Label>
+                      <Input
+                        id={`plan-${index}-name`}
+                        value={plan.name}
+                        onChange={(e) => {
+                          const newPlans = [...editingComponent.content.plans];
+                          newPlans[index] = { ...newPlans[index], name: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, plans: newPlans }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`plan-${index}-price`}>Price</Label>
+                      <Input
+                        id={`plan-${index}-price`}
+                        value={plan.price}
+                        onChange={(e) => {
+                          const newPlans = [...editingComponent.content.plans];
+                          newPlans[index] = { ...newPlans[index], price: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, plans: newPlans }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`plan-${index}-description`}>Description</Label>
+                      <Textarea
+                        id={`plan-${index}-description`}
+                        value={plan.description}
+                        onChange={(e) => {
+                          const newPlans = [...editingComponent.content.plans];
+                          newPlans[index] = { ...newPlans[index], description: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, plans: newPlans }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Features</Label>
+                      {plan.features.map((feature, featureIndex) => (
+                        <Input
+                          key={featureIndex}
+                          value={feature}
+                          onChange={(e) => {
+                            const newPlans = [...editingComponent.content.plans];
+                            const newFeatures = [...newPlans[index].features];
+                            newFeatures[featureIndex] = e.target.value;
+                            newPlans[index] = { ...newPlans[index], features: newFeatures };
+                            setEditingComponent({
+                              ...editingComponent,
+                              content: { ...editingComponent.content, plans: newPlans }
+                            });
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 'faq':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="faq-title">Section Title</Label>
+              <Input
+                id="faq-title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-4">
+              <Label>FAQ Items</Label>
+              {editingComponent.content.faqs.map((faq, index) => (
+                <Card key={index} className="p-4">
+                  <CardContent className="p-0 space-y-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor={`faq-${index}-question`}>Question</Label>
+                      <Input
+                        id={`faq-${index}-question`}
+                        value={faq.question}
+                        onChange={(e) => {
+                          const newFaqs = [...editingComponent.content.faqs];
+                          newFaqs[index] = { ...newFaqs[index], question: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, faqs: newFaqs }
+                          });
+                        }}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor={`faq-${index}-answer`}>Answer</Label>
+                      <Textarea
+                        id={`faq-${index}-answer`}
+                        value={faq.answer}
+                        onChange={(e) => {
+                          const newFaqs = [...editingComponent.content.faqs];
+                          newFaqs[index] = { ...newFaqs[index], answer: e.target.value };
+                          setEditingComponent({
+                            ...editingComponent,
+                            content: { ...editingComponent.content, faqs: newFaqs }
+                          });
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 'contact':
+        return (
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="contact-title">Section Title</Label>
+              <Input
+                id="contact-title"
+                value={editingComponent.content.title}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, title: e.target.value }
+                })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="contact-description">Description</Label>
+              <Textarea
+                id="contact-description"
+                value={editingComponent.content.description}
+                onChange={(e) => setEditingComponent({
+                  ...editingComponent,
+                  content: { ...editingComponent.content, description: e.target.value }
+                })}
+              />
+            </div>
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
   return (
     <div className="h-full flex flex-col lg:flex-row gap-4 p-4">
       <div className="lg:w-64 flex-shrink-0">
@@ -239,110 +668,18 @@ export default function EditorPage() {
       </div>
 
       <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Edit {editingComponent?.type}</DialogTitle>
           </DialogHeader>
-          {editingComponent?.type === 'hero' && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={editingComponent.content.title}
-                  onChange={(e) => setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value }
-                  })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={editingComponent.content.description}
-                  onChange={(e) => setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value }
-                  })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="buttonText">Button Text</Label>
-                <Input
-                  id="buttonText"
-                  value={editingComponent.content.buttonText}
-                  onChange={(e) => setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, buttonText: e.target.value }
-                  })}
-                />
-              </div>
-              <Button onClick={() => handleSave(editingComponent.content)}>
-                Save Changes
-              </Button>
-            </div>
-          )}
-          {editingComponent?.type === 'features' && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={editingComponent.content.title}
-                  onChange={(e) => setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value }
-                  })}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={editingComponent.content.description}
-                  onChange={(e) => setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value }
-                  })}
-                />
-              </div>
-              {editingComponent.content.features.map((feature, index) => (
-                <div key={index} className="grid gap-2">
-                  <Label htmlFor={`feature-${index}-title`}>Feature {index + 1} Title</Label>
-                  <Input
-                    id={`feature-${index}-title`}
-                    value={feature.title}
-                    onChange={(e) => {
-                      const newFeatures = [...editingComponent.content.features];
-                      newFeatures[index] = { ...newFeatures[index], title: e.target.value };
-                      setEditingComponent({
-                        ...editingComponent,
-                        content: { ...editingComponent.content, features: newFeatures }
-                      });
-                    }}
-                  />
-                  <Label htmlFor={`feature-${index}-description`}>Feature {index + 1} Description</Label>
-                  <Textarea
-                    id={`feature-${index}-description`}
-                    value={feature.description}
-                    onChange={(e) => {
-                      const newFeatures = [...editingComponent.content.features];
-                      newFeatures[index] = { ...newFeatures[index], description: e.target.value };
-                      setEditingComponent({
-                        ...editingComponent,
-                        content: { ...editingComponent.content, features: newFeatures }
-                      });
-                    }}
-                  />
-                </div>
-              ))}
-              <Button onClick={() => handleSave(editingComponent.content)}>
-                Save Changes
-              </Button>
-            </div>
-          )}
-          {/* Add similar editing sections for other component types */}
+          <ScrollArea className="max-h-[70vh] pr-4">
+            {renderEditingForm()}
+          </ScrollArea>
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => handleSave(editingComponent?.content)}>
+              Save Changes
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

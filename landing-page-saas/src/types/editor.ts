@@ -13,8 +13,27 @@ export interface EditorComponent {
   content: Record<string, any>
 }
 
-export interface DraggedComponent {
-  id: string
-  type: ComponentType
+export interface Feature {
+  title: string
+  description: string
+  icon: 'Laptop' | 'Book' | 'Users' | 'Trophy'
+}
+
+export interface Testimonial {
+  content: string
+  author: string
+  role: string
+}
+
+export interface PricingPlan {
+  name: string
+  price: string
+  description: string
+  features: string[]
+}
+
+export interface FAQItem {
+  question: string
+  answer: string
 }
 

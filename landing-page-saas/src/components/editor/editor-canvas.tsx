@@ -15,7 +15,9 @@ interface EditorCanvasProps {
 }
 
 export function EditorCanvas({ components, onEdit }: EditorCanvasProps) {
+  console.log('EditorCanvas rendering with components:', components)
   const renderComponent = (component: EditorComponent) => {
+    console.log('Rendering component:', component)
     switch (component.type) {
       case 'hero':
         return (
@@ -80,11 +82,14 @@ export function EditorCanvas({ components, onEdit }: EditorCanvasProps) {
 
   return (
     <div className="min-h-[calc(100vh-2rem)] w-full rounded-lg border-2 border-dashed p-8 overflow-auto">
-      {components.map((component) => (
-        <div key={component.id} className="mb-4">
-          {renderComponent(component)}
-        </div>
-      ))}
+      {components.map((component) => {
+        console.log('Mapping component:', component)
+        return (
+          <div key={component.id} className="mb-4">
+            {renderComponent(component)}
+          </div>
+        )
+      })}
     </div>
   )
 }
