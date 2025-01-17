@@ -26,7 +26,7 @@ import { getUserLandingPages, deleteLandingPage } from "@/lib/api/landing-pages"
 import { formatDate } from "@/lib/utils/date"
 import { useToast } from "@/components/ui/use-toast"
 import { useRouter } from 'next/navigation'
-import { createClientSideSupabaseClient } from '@/lib/supabase'
+import { createClientSideSupabaseClient } from '@/lib/supabase-client'
 
 type LandingPage = {
   id: string

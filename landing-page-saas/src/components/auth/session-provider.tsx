@@ -2,48 +2,59 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'
-import { createClientSideSupabaseClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
+import { createClientSideSupabaseClient } from '@/lib/supabase-client'
+import { usePathname, useRouter } from 'next/navigation'
 
-const SessionContext = createContext<{
+interface SessionContextType {
   session: Session | null
-  loading: boolean
-}>({
+  isLoading: boolean
+}
+
+const SessionContext = createContext<SessionContextType>({
   session: null,
-  loading: true
+  isLoading: true,
 })
 
-export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+export function SessionProvider({
+  children,
+  initialSession,
+}: {
+  children: React.ReactNode
+  initialSession: Session | null
+}) {
+  const [session, setSession] = useState<Session | null>(initialSession)
+  const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     const supabase = createClientSideSupabaseClient()
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
-      if (session) {
-        router.push('/dashboard')
-      } else {
-        router.push('/auth/signin')
+      
+      if (event === 'SIGNED_OUT') {
+        // Only redirect if we're not already on an auth page
+        if (!pathname.startsWith('/auth')) {
+          router.push('/auth/signin')
+        }
+      } else if (event === 'SIGNED_IN') {
+        // Only redirect if we're on an auth page
+        if (pathname.startsWith('/auth')) {
+          router.push('/dashboard')
+        }
       }
     })
 
-    return () => subscription.unsubscribe()
-  }, [router])
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router, pathname])
 
   return (
-    <SessionContext.Provider value={{ session, loading }}>
+    <SessionContext.Provider value={{ session, isLoading }}>
       {children}
     </SessionContext.Provider>
   )

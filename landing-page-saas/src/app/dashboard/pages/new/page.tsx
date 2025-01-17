@@ -11,7 +11,7 @@ import { ArrowLeft } from 'lucide-react'
 import Link from "next/link"
 import { createLandingPage } from "@/lib/api/landing-pages"
 import { useToast } from "@/components/ui/use-toast"
-import { getCurrentUser } from "@/lib/supabase"
+import { getCurrentUser } from "@/lib/supabase-client"
 
 export default function NewPage() {
   const router = useRouter()

@@ -1,7 +1,8 @@
-import { supabase } from './supabase'
+import { createClientSideSupabaseClient } from './supabase-client'
 
 export async function signIn(email: string, password: string) {
   try {
+    const supabase = createClientSideSupabaseClient()
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -9,7 +10,7 @@ export async function signIn(email: string, password: string) {
 
     if (error) throw error
 
-    // Forzar la actualización de la sesión
+    // Force session update
     if (data.session) {
       await supabase.auth.setSession(data.session)
     }
@@ -23,6 +24,7 @@ export async function signIn(email: string, password: string) {
 
 export async function signOut() {
   try {
+    const supabase = createClientSideSupabaseClient()
     const { error } = await supabase.auth.signOut()
     if (error) throw error
     window.location.href = '/auth/signin'
@@ -34,6 +36,7 @@ export async function signOut() {
 
 export async function getSession() {
   try {
+    const supabase = createClientSideSupabaseClient()
     const { data: { session }, error } = await supabase.auth.getSession()
     if (error) throw error
     return session

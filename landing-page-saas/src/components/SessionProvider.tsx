@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { createClientSideSupabaseClient } from '@/lib/supabase'
+import { usePathname, useRouter } from 'next/navigation'
 
 const SessionContext = createContext<{
   session: Session | null
@@ -12,20 +13,33 @@ const SessionContext = createContext<{
   loading: true
 })
 
-export function SessionProvider({ children, initialSession }: { children: React.ReactNode, initialSession: Session | null }) {
-  const [session, setSession] = useState<Session | null>(initialSession)
-  const [loading, setLoading] = useState(false)
+export function SessionProvider({ children }: { children: React.ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
-    setLoading(true)
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const supabase = createClientSideSupabaseClient()
+
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
     })
 
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+      if (!session && !pathname.startsWith('/auth')) {
+        router.push('/auth/signin')
+      }
+    })
+
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router, pathname])
 
   return (
     <SessionContext.Provider value={{ session, loading }}>
@@ -39,6 +53,6 @@ export function useSession() {
   if (context === undefined) {
     throw new Error('useSession must be used within a SessionProvider')
   }
-  return { session: context.session, isLoading: context.loading }
+  return context
 }
 

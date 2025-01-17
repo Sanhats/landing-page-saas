@@ -5,7 +5,7 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { LayoutDashboard, FileText, Settings, LogOut } from 'lucide-react'
-import { signOut } from "@/lib/auth"
+import { createClientSideSupabaseClient } from '@/lib/supabase-client'
 import { useToast } from "@/components/ui/use-toast"
 
 const routes = [
@@ -36,7 +36,10 @@ export function SideNav() {
 
   const handleSignOut = async () => {
     try {
-      await signOut()
+      const supabase = createClientSideSupabaseClient()
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      
       router.push('/auth/signin')
       router.refresh()
     } catch (error) {

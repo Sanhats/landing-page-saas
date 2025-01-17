@@ -1,5 +1,5 @@
-import { supabase, getCurrentUser, createClientSideSupabaseClient } from '@/lib/supabase'
 import { EditorComponent } from '@/types/editor'
+import { createClientSideSupabaseClient } from '@/lib/supabase-client'
 
 const defaultComponents: EditorComponent[] = [
   {
