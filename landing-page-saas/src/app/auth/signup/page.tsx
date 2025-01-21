@@ -23,7 +23,27 @@ export default function SignUp() {
     const password = formData.get('password') as string
     const fullName = formData.get('fullName') as string
 
-    
+    try {
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+          },
+        },
+      })
+
+      if (error) {
+        setError(error.message)
+        return
+      }
+
+      router.push('/auth/signin')
+    } catch (error) {
+      setError('An error occurred. Please try again.')
+    }
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
@@ -37,7 +57,6 @@ export default function SignUp() {
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <p className="text-sm text-red-800">{error}</p>
-              
             </div>
           )}
           <div className="space-y-4">
