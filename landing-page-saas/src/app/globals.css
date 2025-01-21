@@ -1,37 +1,37 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
-    --background: 215 100% 12%;
-    --foreground: 210 40% 98%;
-    
-    --card: 215 100% 12%;
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 215 100% 12%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 199 89% 48%;
-    --primary-foreground: 210 40% 98%;
-    
-    --secondary: 215 100% 18%;
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 215 100% 18%;
-    --muted-foreground: 215 20% 65%;
-    
-    --accent: 215 100% 18%;
-    --accent-foreground: 210 40% 98%;
-    
+    --background: 217 100% 12%;
+    --foreground: 40 47% 87%;
+
+    --card: 217 100% 12%;
+    --card-foreground: 40 47% 87%;
+
+    --popover: 217 100% 12%;
+    --popover-foreground: 40 47% 87%;
+
+    --primary: 203 41% 39%;
+    --primary-foreground: 40 47% 87%;
+
+    --secondary: 199 31% 55%;
+    --secondary-foreground: 217 100% 12%;
+
+    --muted: 199 31% 55%;
+    --muted-foreground: 40 47% 80%;
+
+    --accent: 40 47% 87%;
+    --accent-foreground: 217 100% 12%;
+
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    
-    --border: 215 100% 18%;
-    --input: 215 100% 18%;
-    --ring: 199 89% 48%;
-    
+    --destructive-foreground: 40 47% 87%;
+
+    --border: 203 41% 39%;
+    --input: 203 41% 39%;
+    --ring: 203 41% 39%;
+
     --radius: 0.5rem;
   }
 }
@@ -41,25 +41,53 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
 @layer utilities {
-  .bg-dashboard-gradient {
-    background: linear-gradient(
-      to bottom right,
-      hsl(215 100% 12%) 0%,
-      hsl(215 100% 8%) 100%
-    );
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out forwards;
+    opacity: 0;
   }
 
-  .bg-card-gradient {
-    background: linear-gradient(
-      to bottom right,
-      hsl(215 100% 18% / 0.5) 0%,
-      hsl(215 100% 12% / 0.5) 100%
-    );
+  @keyframes fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 20px -10px rgba(58, 109, 140, 0.5);
+    }
+    to {
+      box-shadow: 0 0 20px 0px rgba(58, 109, 140, 0.7);
+    }
+  }
+
+  .bg-gradient-custom {
+    background: linear-gradient(135deg, rgb(0, 31, 63) 0%, rgb(58, 109, 140) 50%, rgb(106, 154, 176) 100%);
+  }
+
+  .dragging {
+    opacity: 0.5;
+    background: rgba(0, 0, 0, 0.1);
+    border: 2px dashed #ccc;
+  }
+
+  .drag-handle {
+    cursor: move;
   }
 }
 
