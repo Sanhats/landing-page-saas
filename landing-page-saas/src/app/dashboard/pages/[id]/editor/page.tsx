@@ -15,6 +15,15 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Loader2, Save } from "lucide-react"
+import { ThemeProvider, useTheme } from "@/lib/theme-context"
+import { ThemeController } from "@/components/theme-controller"
+import { HeroTemplate } from "@/components/editor/templates/hero-template"
+import { FeaturesTemplate } from "@/components/editor/templates/features-template"
+import { ContentTemplate } from "@/components/editor/templates/content-template"
+import { TestimonialsTemplate } from "@/components/editor/templates/testimonials-template"
+import { PricingTemplate } from "@/components/editor/templates/pricing-template"
+import { FAQTemplate } from "@/components/editor/templates/faq-template"
+import { ContactTemplate } from "@/components/editor/templates/contact-template"
 
 const defaultComponents: EditorComponent[] = [
   {
@@ -686,88 +695,104 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <header className="bg-background border-b p-4 flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Page Editor</h1>
-        <Button onClick={loadPage} variant="outline" className="mr-2">
-          Refresh
-        </Button>
-      </header>
-      <Tabs defaultValue="edit" className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start px-4 border-b">
-          <TabsTrigger value="edit">Edit</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-        </TabsList>
-        <TabsContent value="edit" className="flex-1 p-4 overflow-auto">
-          <div className="flex gap-4 h-full">
-            <Card className="w-64 flex-shrink-0">
-              <CardContent className="p-4">
-                <h2 className="text-lg font-semibold mb-4">Components</h2>
-                <ScrollArea className="h-[calc(100vh-200px)]">
-                  <ul className="space-y-2">
-                    {components.map((component) => (
-                      <li key={component.id}>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start"
-                          onClick={() => handleEdit(component.id)}
-                        >
-                          {component.type.charAt(0).toUpperCase() + component.type.slice(1)}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-            <div className="flex-1 overflow-auto">
-              <EditorCanvas components={components} onEdit={handleEdit} onReorder={handleReorder} />
+    <ThemeProvider>
+      <div className="h-screen flex flex-col">
+        <header className="bg-background border-b p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Page Editor</h1>
+          <Button onClick={loadPage} variant="outline" className="mr-2">
+            Refresh
+          </Button>
+        </header>
+        <Tabs defaultValue="edit" className="flex-1 flex flex-col">
+          <TabsList className="w-full justify-start px-4 border-b">
+            <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+          <TabsContent value="edit" className="flex-1 p-4 overflow-auto">
+            <div className="flex gap-4 h-full">
+              <Card className="w-64 flex-shrink-0">
+                <CardContent className="p-4">
+                  <h2 className="text-lg font-semibold mb-4">Components</h2>
+                  <ScrollArea className="h-[calc(100vh-200px)]">
+                    <ul className="space-y-2">
+                      {components.map((component) => (
+                        <li key={component.id}>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start"
+                            onClick={() => handleEdit(component.id)}
+                          >
+                            {component.type.charAt(0).toUpperCase() + component.type.slice(1)}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+              <div className="flex-1 overflow-auto">
+                <EditorCanvas components={components} onEdit={handleEdit} onReorder={handleReorder} />
+              </div>
+              <Card className="w-80 flex-shrink-0">
+                <CardContent className="p-4">
+                  <ThemeController />
+                </CardContent>
+              </Card>
             </div>
-          </div>
-        </TabsContent>
-        <TabsContent value="preview" className="flex-1 p-4 overflow-auto">
-          <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
-            {components.map((component) => {
-              const ComponentTemplate = {
-                hero: HeroTemplate,
-                features: FeaturesTemplate,
-                content: ContentTemplate,
-                testimonials: TestimonialsTemplate,
-                pricing: PricingTemplate,
-                faq: FAQTemplate,
-                contact: ContactTemplate,
-              }[component.type]
+          </TabsContent>
+          <TabsContent value="preview" className="flex-1 p-4 overflow-auto">
+            <ThemeProvider>
+              <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+                {components.map((component) => {
+                  switch (component.type) {
+                    case "hero":
+                      return <HeroTemplate key={component.id} content={component.content} />
+                    case "features":
+                      return <FeaturesTemplate key={component.id} content={component.content} />
+                    case "content":
+                      return <ContentTemplate key={component.id} content={component.content} />
+                    case "testimonials":
+                      return <TestimonialsTemplate key={component.id} content={component.content} />
+                    case "pricing":
+                      return <PricingTemplate key={component.id} content={component.content} />
+                    case "faq":
+                      return <FAQTemplate key={component.id} content={component.content} />
+                    case "contact":
+                      return <ContactTemplate key={component.id} content={component.content} />
+                    default:
+                      return null
+                  }
+                })}
+              </div>
+            </ThemeProvider>
+          </TabsContent>
+        </Tabs>
 
-              return ComponentTemplate ? <ComponentTemplate key={component.id} content={component.content} /> : null
-            })}
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
-        <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit {editingComponent?.type}</DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">{renderEditingForm()}</ScrollArea>
-          <div className="flex justify-end pt-4">
-            <Button onClick={() => handleSave(editingComponent?.content)} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
+          <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Edit {editingComponent?.type}</DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] pr-4">{renderEditingForm()}</ScrollArea>
+            <div className="flex justify-end pt-4">
+              <Button onClick={() => handleSave(editingComponent?.content)} disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </ThemeProvider>
   )
 }
 
@@ -912,7 +937,7 @@ function ContactTemplate({ content }: { content: any }) {
         <p className="mt-4 text-lg text-gray-700">{content.description}</p>
         <form className="mt-8">
           <div className="mb-4">
-            <label htmlFor="name" className="block text-gray-700 font-bold mb-2">
+            <label htmlFor="name" className="block text-gray700 font-bold mb-2">
               Name
             </label>
             <input

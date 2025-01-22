@@ -42,7 +42,7 @@ function SortableItem({ component, onEdit }: { component: EditorComponent; onEdi
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} className="mb-4">
-      <div {...listeners} className="drag-handle p-2 bg-gray-200 rounded mb-2">
+      <div {...listeners} className="drag-handle p-2 bg-[##001F3F] rounded mb-2">
         Drag to reorder
       </div>
       <ComponentTemplate content={component.content} onEdit={() => onEdit(component.id)} />
