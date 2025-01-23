@@ -14,7 +14,7 @@ import { getLandingPage, updateLandingPage } from "@/lib/api/landing-pages"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Loader2, Save } from "lucide-react"
+import { Loader2, Save, Eye, Edit2, Settings2, ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeProvider, useTheme } from "@/lib/theme-context"
 import { ThemeController } from "@/components/theme-controller"
 import { HeroTemplate } from "@/components/editor/templates/hero-template"
@@ -24,6 +24,7 @@ import { TestimonialsTemplate } from "@/components/editor/templates/testimonials
 import { PricingTemplate } from "@/components/editor/templates/pricing-template"
 import { FAQTemplate } from "@/components/editor/templates/faq-template"
 import { ContactTemplate } from "@/components/editor/templates/contact-template"
+import { cn } from "@/lib/utils"
 
 const defaultComponents: EditorComponent[] = [
   {
@@ -162,6 +163,7 @@ export default function EditorPage() {
   const [editingComponent, setEditingComponent] = useState<EditorComponent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [showSidebars, setShowSidebars] = useState(true)
   const { toast } = useToast()
   const params = useParams()
   const pageId = params.id as string
@@ -696,82 +698,145 @@ export default function EditorPage() {
 
   return (
     <ThemeProvider>
-      <div className="h-screen flex flex-col">
-        <header className="bg-background border-b p-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Page Editor</h1>
-          <Button onClick={loadPage} variant="outline" className="mr-2">
-            Refresh
-          </Button>
+      <div className="h-screen flex flex-col bg-background">
+        <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-semibold">Page Editor</h1>
+            <div className="h-4 w-px bg-border mx-2" />
+            <Tabs defaultValue="edit" className="relative top-[1px]">
+              <TabsList className="h-9">
+                <TabsTrigger value="edit" className="gap-2">
+                  <Edit2 className="h-4 w-4" />
+                  Edit
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="gap-2">
+                  <Eye className="h-4 w-4" />
+                  Preview
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowSidebars(!showSidebars)} className="gap-2">
+              <Settings2 className="h-4 w-4" />
+              {showSidebars ? "Hide" : "Show"} Controls
+            </Button>
+            <Button onClick={loadPage} variant="outline" size="sm">
+              Refresh
+            </Button>
+          </div>
         </header>
-        <Tabs defaultValue="edit" className="flex-1 flex flex-col">
-          <TabsList className="w-full justify-start px-4 border-b">
-            <TabsTrigger value="edit">Edit</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-          </TabsList>
-          <TabsContent value="edit" className="flex-1 p-4 overflow-auto">
-            <div className="flex gap-4 h-full">
-              <Card className="w-64 flex-shrink-0">
-                <CardContent className="p-4">
-                  <h2 className="text-lg font-semibold mb-4">Components</h2>
-                  <ScrollArea className="h-[calc(100vh-200px)]">
-                    <ul className="space-y-2">
-                      {components.map((component) => (
-                        <li key={component.id}>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-start"
-                            onClick={() => handleEdit(component.id)}
-                          >
-                            {component.type.charAt(0).toUpperCase() + component.type.slice(1)}
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-              <div className="flex-1 overflow-auto">
-                <EditorCanvas components={components} onEdit={handleEdit} onReorder={handleReorder} />
-              </div>
-              <Card className="w-80 flex-shrink-0">
-                <CardContent className="p-4">
-                  <ThemeController />
-                </CardContent>
-              </Card>
+
+        <div className="flex-1 flex">
+          {/* Left Sidebar */}
+          <div
+            className={cn(
+              "w-64 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
+              !showSidebars && "-ml-64",
+            )}
+          >
+            <div className="p-4 h-full flex flex-col">
+              <h2 className="font-semibold mb-4">Components</h2>
+              <ScrollArea className="flex-1 -mx-4 px-4">
+                <div className="space-y-2">
+                  {components.map((component) => (
+                    <Button
+                      key={component.id}
+                      variant="outline"
+                      className="w-full justify-start gap-2 group relative"
+                      onClick={() => handleEdit(component.id)}
+                    >
+                      <span className="flex-1 text-left">
+                        {component.type.charAt(0).toUpperCase() + component.type.slice(1)}
+                      </span>
+                      <Edit2 className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
-          </TabsContent>
-          <TabsContent value="preview" className="flex-1 p-4 overflow-auto">
-            <ThemeProvider>
-              <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 relative">
+            <ScrollArea className="h-full">
+              <div className="max-w-6xl mx-auto p-8">
                 {components.map((component) => {
-                  switch (component.type) {
-                    case "hero":
-                      return <HeroTemplate key={component.id} content={component.content} />
-                    case "features":
-                      return <FeaturesTemplate key={component.id} content={component.content} />
-                    case "content":
-                      return <ContentTemplate key={component.id} content={component.content} />
-                    case "testimonials":
-                      return <TestimonialsTemplate key={component.id} content={component.content} />
-                    case "pricing":
-                      return <PricingTemplate key={component.id} content={component.content} />
-                    case "faq":
-                      return <FAQTemplate key={component.id} content={component.content} />
-                    case "contact":
-                      return <ContactTemplate key={component.id} content={component.content} />
-                    default:
-                      return null
-                  }
+                  const Component = {
+                    hero: HeroTemplate,
+                    features: FeaturesTemplate,
+                    content: ContentTemplate,
+                    testimonials: TestimonialsTemplate,
+                    pricing: PricingTemplate,
+                    faq: FAQTemplate,
+                    contact: ContactTemplate,
+                  }[component.type]
+
+                  if (!Component) return null
+
+                  return (
+                    <div key={component.id} className="group relative">
+                      <Component content={component.content} />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleEdit(component.id)}
+                      >
+                        <Edit2 className="h-4 w-4 mr-2" />
+                        Edit {component.type}
+                      </Button>
+                    </div>
+                  )
                 })}
               </div>
-            </ThemeProvider>
-          </TabsContent>
-        </Tabs>
+            </ScrollArea>
+
+            {/* Sidebar Toggle Buttons */}
+            {!showSidebars && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute left-4 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowSidebars(true)}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="absolute right-4 top-1/2 -translate-y-1/2"
+                  onClick={() => setShowSidebars(true)}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <div
+            className={cn(
+              "w-80 border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
+              !showSidebars && "-mr-80",
+            )}
+          >
+            <div className="p-4 h-full">
+              <h2 className="font-semibold mb-4">Theme Settings</h2>
+              <ScrollArea className="h-[calc(100%-2rem)]">
+                <ThemeController />
+              </ScrollArea>
+            </div>
+          </div>
+        </div>
 
         <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
           <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>Edit {editingComponent?.type}</DialogTitle>
+              <DialogTitle>
+                Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
+              </DialogTitle>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] pr-4">{renderEditingForm()}</ScrollArea>
             <div className="flex justify-end pt-4">
@@ -937,7 +1002,7 @@ function ContactTemplate({ content }: { content: any }) {
         <p className="mt-4 text-lg text-gray-700">{content.description}</p>
         <form className="mt-8">
           <div className="mb-4">
-            <label htmlFor="name" className="block text-gray700 font-bold mb-2">
+            <label htmlFor="name" className="block text-gray-700 font-bold mb-2">
               Name
             </label>
             <input
@@ -947,7 +1012,6 @@ function ContactTemplate({ content }: { content: any }) {
             />
           </div>
           <div className="mb-4">
-            {" "}
             <label htmlFor="email" className="block text-gray-700 font-bold mb-2">
               Email
             </label>

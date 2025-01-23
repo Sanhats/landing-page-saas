@@ -1,4 +1,5 @@
-import type React from "react"
+"use client"
+
 import { createContext, useContext, useState } from "react"
 
 export interface Theme {
@@ -39,7 +40,7 @@ const defaultTheme: Theme = {
     body: "Inter, sans-serif",
     heading: "Poppins, sans-serif",
   },
-  borderRadius: "0.25rem",
+  borderRadius: "0.5rem",
   boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   spacing: {
     small: "1rem",
@@ -60,13 +61,13 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(defaultTheme)
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
 }
 
-export const useTheme = () => {
+export function useTheme() {
   const context = useContext(ThemeContext)
   if (context === undefined) {
     throw new Error("useTheme must be used within a ThemeProvider")
