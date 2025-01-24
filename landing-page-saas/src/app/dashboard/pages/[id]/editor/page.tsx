@@ -1,20 +1,23 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useParams, useRouter } from "next/navigation"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
-import { ComponentType, type EditorComponent } from "@/types/editor"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { ComponentToolbar } from "@/components/editor/component-toolbar"
+import type { ComponentType, EditorComponent } from "@/types/editor"
 import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/use-toast"
+import { getLandingPage, updateLandingPage } from "@/lib/api/landing-pages"
+import { Loader2, Save, Eye, ArrowLeft } from "lucide-react"
+import Link from "next/link"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
-import { useParams } from "next/navigation"
-import { getLandingPage, updateLandingPage } from "@/lib/api/landing-pages"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { Loader2, Save, Eye, Edit2, Settings2, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeProvider, useTheme } from "@/lib/theme-context"
 import { ThemeController } from "@/components/theme-controller"
 import { HeroTemplate } from "@/components/editor/templates/hero-template"
@@ -159,23 +162,23 @@ const defaultComponents: EditorComponent[] = [
 ]
 
 export default function EditorPage() {
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(true)
   const [components, setComponents] = useState<EditorComponent[]>([])
   const [editingComponent, setEditingComponent] = useState<EditorComponent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [showSidebars, setShowSidebars] = useState(true)
   const { toast } = useToast()
   const params = useParams()
+  const router = useRouter()
   const pageId = params.id as string
 
   const loadPage = useCallback(async () => {
     setIsLoading(true)
     try {
       const page = await getLandingPage(pageId)
-      if (page && page.content && Array.isArray(page.content) && page.content.length > 0) {
+      if (page && page.content && Array.isArray(page.content)) {
         setComponents(page.content as EditorComponent[])
-      } else {
-        throw new Error("No content found")
       }
     } catch (error) {
       console.error("Error loading page:", error)
@@ -193,6 +196,15 @@ export default function EditorPage() {
     loadPage()
   }, [loadPage])
 
+  const handleAddComponent = (type: ComponentType) => {
+    const newComponent: EditorComponent = {
+      id: crypto.randomUUID(),
+      type,
+      content: getDefaultContent(type),
+    }
+    setComponents((prev) => [...prev, newComponent])
+  }
+
   const handleEdit = (id: string) => {
     const component = components.find((c) => c.id === id)
     if (component) {
@@ -200,19 +212,13 @@ export default function EditorPage() {
     }
   }
 
-  const handleSave = async (newContent: any) => {
-    if (!editingComponent) return
-
+  const handleSave = async () => {
     setIsSaving(true)
-    const updatedComponents = components.map((c) => (c.id === editingComponent.id ? { ...c, content: newContent } : c))
-    setComponents(updatedComponents)
-    setEditingComponent(null)
-
     try {
-      await updateLandingPage(pageId, { content: updatedComponents })
+      await updateLandingPage(pageId, { content: components })
       toast({
-        title: "Changes saved",
-        description: "Your changes have been saved successfully.",
+        title: "Success",
+        description: "Changes saved successfully.",
       })
     } catch (error) {
       console.error("Error saving changes:", error)
@@ -690,174 +696,120 @@ export default function EditorPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     )
   }
 
   return (
-    <ThemeProvider>
-      <div className="h-screen flex flex-col bg-background">
-        <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-semibold">Page Editor</h1>
-            <div className="h-4 w-px bg-border mx-2" />
-            <Tabs defaultValue="edit" className="relative top-[1px]">
-              <TabsList className="h-9">
-                <TabsTrigger value="edit" className="gap-2">
-                  <Edit2 className="h-4 w-4" />
-                  Edit
-                </TabsTrigger>
-                <TabsTrigger value="preview" className="gap-2">
-                  <Eye className="h-4 w-4" />
-                  Preview
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowSidebars(!showSidebars)} className="gap-2">
-              <Settings2 className="h-4 w-4" />
-              {showSidebars ? "Hide" : "Show"} Controls
-            </Button>
-            <Button onClick={loadPage} variant="outline" size="sm">
-              Refresh
-            </Button>
-          </div>
-        </header>
+    <div className="h-screen flex flex-col bg-background">
+      <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/dashboard/pages">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <h1 className="text-lg font-semibold">Page Editor</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/dashboard/pages/${pageId}/preview`}>
+              <Eye className="mr-2 h-4 w-4" />
+              Preview
+            </Link>
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            <Save className="mr-2 h-4 w-4" />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      </header>
 
-        <div className="flex-1 flex">
-          {/* Left Sidebar */}
-          <div
-            className={cn(
-              "w-64 border-r bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
-              !showSidebars && "-ml-64",
-            )}
-          >
-            <div className="p-4 h-full flex flex-col">
-              <h2 className="font-semibold mb-4">Components</h2>
-              <ScrollArea className="flex-1 -mx-4 px-4">
-                <div className="space-y-2">
-                  {components.map((component) => (
-                    <Button
-                      key={component.id}
-                      variant="outline"
-                      className="w-full justify-start gap-2 group relative"
-                      onClick={() => handleEdit(component.id)}
-                    >
-                      <span className="flex-1 text-left">
-                        {component.type.charAt(0).toUpperCase() + component.type.slice(1)}
-                      </span>
-                      <Edit2 className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Button>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1 relative">
-            <ScrollArea className="h-full">
-              <div className="max-w-6xl mx-auto p-8">
-                {components.map((component) => {
-                  const Component = {
-                    hero: HeroTemplate,
-                    features: FeaturesTemplate,
-                    content: ContentTemplate,
-                    testimonials: TestimonialsTemplate,
-                    pricing: PricingTemplate,
-                    faq: FAQTemplate,
-                    contact: ContactTemplate,
-                  }[component.type]
-
-                  if (!Component) return null
-
-                  return (
-                    <div key={component.id} className="group relative">
-                      <Component content={component.content} />
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => handleEdit(component.id)}
-                      >
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Edit {component.type}
-                      </Button>
-                    </div>
-                  )
-                })}
-              </div>
-            </ScrollArea>
-
-            {/* Sidebar Toggle Buttons */}
-            {!showSidebars && (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute left-4 top-1/2 -translate-y-1/2"
-                  onClick={() => setShowSidebars(true)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="absolute right-4 top-1/2 -translate-y-1/2"
-                  onClick={() => setShowSidebars(true)}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Right Sidebar */}
-          <div
-            className={cn(
-              "w-80 border-l bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-300",
-              !showSidebars && "-mr-80",
-            )}
-          >
-            <div className="p-4 h-full">
-              <h2 className="font-semibold mb-4">Theme Settings</h2>
-              <ScrollArea className="h-[calc(100%-2rem)]">
-                <ThemeController />
-              </ScrollArea>
-            </div>
-          </div>
+      <div className="flex-1 flex">
+        {/* Left Sidebar */}
+        <div
+          className={cn(
+            "w-64 border-r bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
+            !leftSidebarOpen && "-translate-x-full",
+          )}
+        >
+          <ComponentToolbar onAddComponent={handleAddComponent} />
         </div>
 
-        <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
-          <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
-              </DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[70vh] pr-4">{renderEditingForm()}</ScrollArea>
-            <div className="flex justify-end pt-4">
-              <Button onClick={() => handleSave(editingComponent?.content)} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Main Content */}
+        <div className="flex-1 relative bg-white">
+          <ScrollArea className="h-full">
+            <EditorCanvas components={components} onEdit={handleEdit} onReorder={handleReorder} />
+          </ScrollArea>
+
+          {/* Sidebar Toggle Buttons */}
+          {!leftSidebarOpen && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute left-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
+              onClick={() => setLeftSidebarOpen(true)}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          )}
+
+          {!rightSidebarOpen && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute right-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
+              onClick={() => setRightSidebarOpen(true)}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+
+        {/* Right Sidebar */}
+        <div
+          className={cn(
+            "w-80 border-l bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
+            !rightSidebarOpen && "translate-x-full",
+          )}
+        >
+          <div className="p-4 h-full">
+            <h2 className="font-semibold mb-4">Theme Settings</h2>
+            <ScrollArea className="h-[calc(100%-2rem)]">
+              <ThemeController />
+            </ScrollArea>
+          </div>
+        </div>
       </div>
-    </ThemeProvider>
+
+      <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
+        <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">{renderEditingForm()}</ScrollArea>
+          <div className="flex justify-end pt-4">
+            <Button onClick={() => handleSave(editingComponent?.content)} disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }
 
@@ -915,7 +867,7 @@ function FeaturesTemplate({ content }: { content: any }) {
 function ContentTemplate({ content }: { content: any }) {
   return (
     <section className="py-16 bg-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-autopx-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-gray-900">{content.title}</h2>
         <p className="mt-4 text-lg text-gray-700">{content.description}</p>
         {content.imageUrl && (
@@ -930,7 +882,7 @@ function TestimonialsTemplate({ content }: { content: any }) {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold text-gray-900">{content.title}</h2>
+        <h2 className="text-3xl fontbold text-gray-900">{content.title}</h2>
         <div className="mt-8">
           {content.testimonials.map((testimonial) => (
             <div key={testimonial.content} className="bg-gray-100 p-6 rounded-lg shadow-lg mb-6">
@@ -964,7 +916,7 @@ function PricingTemplate({ content }: { content: any }) {
               </ul>
               <a
                 href="#"
-                className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"
+                className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-boldpy-2 px-4 rounded-lg"
               >
                 Select Plan
               </a>
@@ -1040,5 +992,36 @@ function ContactTemplate({ content }: { content: any }) {
       </div>
     </section>
   )
+}
+
+function getDefaultContent(type: ComponentType) {
+  switch (type) {
+    case "hero":
+      return {
+        title: "Welcome to our platform",
+        description: "The best solution for your needs",
+        buttonText: "Get Started",
+      }
+    case "features":
+      return {
+        title: "Our Features",
+        description: "Everything you need to succeed",
+        features: [
+          {
+            title: "Feature 1",
+            description: "Description of feature 1",
+            icon: "Laptop",
+          },
+          {
+            title: "Feature 2",
+            description: "Description of feature 2",
+            icon: "Book",
+          },
+        ],
+      }
+    // Add other component type defaults
+    default:
+      return {}
+  }
 }
 
