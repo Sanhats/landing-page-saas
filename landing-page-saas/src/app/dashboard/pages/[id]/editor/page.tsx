@@ -3,30 +3,51 @@
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
-import { ComponentToolbar } from "@/components/editor/component-toolbar"
+import { ComponentLibrary } from "@/components/editor/component-library"
+import { LivePreview } from "@/components/editor/live-preview"
+import { ThemeCustomizer } from "@/components/editor/theme-customizer"
+import { ComponentEditForm } from "@/components/editor/component-edit-form"
+import { TemplateLibrary } from "@/components/editor/template-library"
 import type { ComponentType, EditorComponent } from "@/types/editor"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
-import { getLandingPage, updateLandingPage } from "@/lib/api/landing-pages"
-import { Loader2, Save, Eye, ArrowLeft } from "lucide-react"
+import {
+  getLandingPage,
+  updateLandingPage,
+  publishLandingPage,
+  unpublishLandingPage,
+  saveAsTemplate,
+} from "@/lib/api/landing-pages"
+import {
+  Loader2,
+  Save,
+  Eye,
+  ArrowLeft,
+  Undo,
+  Redo,
+  Globe,
+  GlobeIcon as GlobeOff,
+  LayoutTemplateIcon as Template,
+  Smartphone,
+  Tablet,
+  Laptop,
+  ExternalLink,
+} from "lucide-react"
 import Link from "next/link"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeProvider, useTheme } from "@/lib/theme-context"
-import { ThemeController } from "@/components/theme-controller"
-import { HeroTemplate } from "@/components/editor/templates/hero-template"
-import { FeaturesTemplate } from "@/components/editor/templates/features-template"
-import { ContentTemplate } from "@/components/editor/templates/content-template"
-import { TestimonialsTemplate } from "@/components/editor/templates/testimonials-template"
-import { PricingTemplate } from "@/components/editor/templates/pricing-template"
-import { FAQTemplate } from "@/components/editor/templates/faq-template"
-import { ContactTemplate } from "@/components/editor/templates/contact-template"
 import { cn } from "@/lib/utils"
 
 const defaultComponents: EditorComponent[] = [
@@ -168,6 +189,20 @@ export default function EditorPage() {
   const [editingComponent, setEditingComponent] = useState<EditorComponent | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [history, setHistory] = useState<EditorComponent[][]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [componentToDelete, setComponentToDelete] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
+  const [pageData, setPageData] = useState<{ title: string; description: string; status: "draft" | "published" }>({
+    title: "",
+    description: "",
+    status: "draft",
+  })
+  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [saveAsTemplateOpen, setSaveAsTemplateOpen] = useState(false)
+  const [templateName, setTemplateName] = useState("")
   const { toast } = useToast()
   const params = useParams()
   const router = useRouter()
@@ -177,8 +212,17 @@ export default function EditorPage() {
     setIsLoading(true)
     try {
       const page = await getLandingPage(pageId)
-      if (page && page.content && Array.isArray(page.content)) {
-        setComponents(page.content as EditorComponent[])
+      if (page) {
+        setPageData({
+          title: page.title,
+          description: page.description || "",
+          status: page.status as "draft" | "published",
+        })
+        if (page.content && Array.isArray(page.content)) {
+          setComponents(page.content as EditorComponent[])
+          setHistory([page.content as EditorComponent[]])
+          setHistoryIndex(0)
+        }
       }
     } catch (error) {
       console.error("Error loading page:", error)
@@ -196,13 +240,18 @@ export default function EditorPage() {
     loadPage()
   }, [loadPage])
 
-  const handleAddComponent = (type: ComponentType) => {
-    const newComponent: EditorComponent = {
-      id: crypto.randomUUID(),
-      type,
-      content: getDefaultContent(type),
-    }
-    setComponents((prev) => [...prev, newComponent])
+  const addToHistory = useCallback(
+    (newComponents: EditorComponent[]) => {
+      setHistory((prev) => [...prev.slice(0, historyIndex + 1), newComponents])
+      setHistoryIndex((prev) => prev + 1)
+    },
+    [historyIndex],
+  )
+
+  const handleAddComponent = (component: EditorComponent) => {
+    const newComponents = [...components, component]
+    setComponents(newComponents)
+    addToHistory(newComponents)
   }
 
   const handleEdit = (id: string) => {
@@ -215,7 +264,7 @@ export default function EditorPage() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await updateLandingPage(pageId, { content: components })
+      await updateLandingPage(pageId, { content: components, title: pageData.title, description: pageData.description })
       toast({
         title: "Success",
         description: "Changes saved successfully.",
@@ -232,466 +281,135 @@ export default function EditorPage() {
     }
   }
 
-  const handleReorder = async (startIndex: number, endIndex: number) => {
-    const result = Array.from(components)
-    const [reorderedItem] = result.splice(startIndex, 1)
-    result.splice(endIndex, 0, reorderedItem)
-
-    setComponents(result)
-
+  const handlePublish = async () => {
+    setIsPublishing(true)
     try {
-      await updateLandingPage(pageId, { content: result })
+      await publishLandingPage(pageId)
+      setPageData((prev) => ({ ...prev, status: "published" }))
       toast({
-        title: "Order updated",
-        description: "The component order has been updated successfully.",
+        title: "Success",
+        description: "Page published successfully.",
       })
     } catch (error) {
-      console.error("Error updating order:", error)
+      console.error("Error publishing page:", error)
       toast({
         title: "Error",
-        description: "Failed to update component order. Please try again.",
+        description: "Failed to publish page. Please try again.",
         variant: "destructive",
       })
-      setComponents(components) // Revert on error
+    } finally {
+      setIsPublishing(false)
     }
   }
 
-  const renderEditingForm = () => {
-    if (!editingComponent) return null
-
-    switch (editingComponent.type) {
-      case "hero":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={editingComponent.content.description}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="buttonText">Button Text</Label>
-              <Input
-                id="buttonText"
-                value={editingComponent.content.buttonText}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, buttonText: e.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-        )
-
-      case "features":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="features-title">Section Title</Label>
-              <Input
-                id="features-title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="features-description">Section Description</Label>
-              <Textarea
-                id="features-description"
-                value={editingComponent.content.description}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-4">
-              <Label>Features</Label>
-              {editingComponent.content.features.map((feature, index) => (
-                <Card key={index} className="p-4">
-                  <CardContent className="p-0 space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor={`feature-${index}-title`}>Title</Label>
-                      <Input
-                        id={`feature-${index}-title`}
-                        value={feature.title}
-                        onChange={(e) => {
-                          const newFeatures = [...editingComponent.content.features]
-                          newFeatures[index] = { ...newFeatures[index], title: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, features: newFeatures },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor={`feature-${index}-description`}>Description</Label>
-                      <Textarea
-                        id={`feature-${index}-description`}
-                        value={feature.description}
-                        onChange={(e) => {
-                          const newFeatures = [...editingComponent.content.features]
-                          newFeatures[index] = { ...newFeatures[index], description: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, features: newFeatures },
-                          })
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
-
-      case "content":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="content-title">Title</Label>
-              <Input
-                id="content-title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="content-description">Description</Label>
-              <Textarea
-                id="content-description"
-                value={editingComponent.content.description}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="content-imageUrl">Image URL</Label>
-              <Input
-                id="content-imageUrl"
-                value={editingComponent.content.imageUrl}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, imageUrl: e.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-        )
-
-      case "testimonials":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="testimonials-title">Section Title</Label>
-              <Input
-                id="testimonials-title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-4">
-              <Label>Testimonials</Label>
-              {editingComponent.content.testimonials.map((testimonial, index) => (
-                <Card key={index} className="p-4">
-                  <CardContent className="p-0 space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor={`testimonial-${index}-content`}>Content</Label>
-                      <Textarea
-                        id={`testimonial-${index}-content`}
-                        value={testimonial.content}
-                        onChange={(e) => {
-                          const newTestimonials = [...editingComponent.content.testimonials]
-                          newTestimonials[index] = { ...newTestimonials[index], content: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, testimonials: newTestimonials },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor={`testimonial-${index}-author`}>Author</Label>
-                      <Input
-                        id={`testimonial-${index}-author`}
-                        value={testimonial.author}
-                        onChange={(e) => {
-                          const newTestimonials = [...editingComponent.content.testimonials]
-                          newTestimonials[index] = { ...newTestimonials[index], author: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, testimonials: newTestimonials },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor={`testimonial-${index}-role`}>Role</Label>
-                      <Input
-                        id={`testimonial-${index}-role`}
-                        value={testimonial.role}
-                        onChange={(e) => {
-                          const newTestimonials = [...editingComponent.content.testimonials]
-                          newTestimonials[index] = { ...newTestimonials[index], role: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, testimonials: newTestimonials },
-                          })
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
-
-      case "pricing":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="pricing-title">Section Title</Label>
-              <Input
-                id="pricing-title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="pricing-description">Section Description</Label>
-              <Textarea
-                id="pricing-description"
-                value={editingComponent.content.description}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-4">
-              <Label>Pricing Plans</Label>
-              {editingComponent.content.plans.map((plan, index) => (
-                <Card key={index} className="p-4">
-                  <CardContent className="p-0 space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor={`plan-${index}-name`}>Plan Name</Label>
-                      <Input
-                        id={`plan-${index}-name`}
-                        value={plan.name}
-                        onChange={(e) => {
-                          const newPlans = [...editingComponent.content.plans]
-                          newPlans[index] = { ...newPlans[index], name: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, plans: newPlans },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor={`plan-${index}-price`}>Price</Label>
-                      <Input
-                        id={`plan-${index}-price`}
-                        value={plan.price}
-                        onChange={(e) => {
-                          const newPlans = [...editingComponent.content.plans]
-                          newPlans[index] = { ...newPlans[index], price: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, plans: newPlans },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor={`plan-${index}-description`}>Description</Label>
-                      <Textarea
-                        id={`plan-${index}-description`}
-                        value={plan.description}
-                        onChange={(e) => {
-                          const newPlans = [...editingComponent.content.plans]
-                          newPlans[index] = { ...newPlans[index], description: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, plans: newPlans },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Features</Label>
-                      {plan.features.map((feature, featureIndex) => (
-                        <Input
-                          key={featureIndex}
-                          value={feature}
-                          onChange={(e) => {
-                            const newPlans = [...editingComponent.content.plans]
-                            const newFeatures = [...newPlans[index].features]
-                            newFeatures[featureIndex] = e.target.value
-                            newPlans[index] = { ...newPlans[index], features: newFeatures }
-                            setEditingComponent({
-                              ...editingComponent,
-                              content: { ...editingComponent.content, plans: newPlans },
-                            })
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
-
-      case "faq":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="faq-title">Section Title</Label>
-              <Input
-                id="faq-title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-4">
-              <Label>FAQ Items</Label>
-              {editingComponent.content.faqs.map((faq, index) => (
-                <Card key={index} className="p-4">
-                  <CardContent className="p-0 space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor={`faq-${index}-question`}>Question</Label>
-                      <Input
-                        id={`faq-${index}-question`}
-                        value={faq.question}
-                        onChange={(e) => {
-                          const newFaqs = [...editingComponent.content.faqs]
-                          newFaqs[index] = { ...newFaqs[index], question: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, faqs: newFaqs },
-                          })
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor={`faq-${index}-answer`}>Answer</Label>
-                      <Textarea
-                        id={`faq-${index}-answer`}
-                        value={faq.answer}
-                        onChange={(e) => {
-                          const newFaqs = [...editingComponent.content.faqs]
-                          newFaqs[index] = { ...newFaqs[index], answer: e.target.value }
-                          setEditingComponent({
-                            ...editingComponent,
-                            content: { ...editingComponent.content, faqs: newFaqs },
-                          })
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
-
-      case "contact":
-        return (
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="contact-title">Section Title</Label>
-              <Input
-                id="contact-title"
-                value={editingComponent.content.title}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, title: e.target.value },
-                  })
-                }
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="contact-description">Description</Label>
-              <Textarea
-                id="contact-description"
-                value={editingComponent.content.description}
-                onChange={(e) =>
-                  setEditingComponent({
-                    ...editingComponent,
-                    content: { ...editingComponent.content, description: e.target.value },
-                  })
-                }
-              />
-            </div>
-          </div>
-        )
-
-      default:
-        return null
+  const handleUnpublish = async () => {
+    setIsPublishing(true)
+    try {
+      await unpublishLandingPage(pageId)
+      setPageData((prev) => ({ ...prev, status: "draft" }))
+      toast({
+        title: "Success",
+        description: "Page unpublished successfully.",
+      })
+    } catch (error) {
+      console.error("Error unpublishing page:", error)
+      toast({
+        title: "Error",
+        description: "Failed to unpublish page. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsPublishing(false)
     }
+  }
+
+  const handleReorder = (startIndex: number, endIndex: number) => {
+    const result = Array.from(components)
+    const [reorderedItem] = result.splice(startIndex, 1)
+    result.splice(endIndex, 0, reorderedItem)
+    setComponents(result)
+    addToHistory(result)
+  }
+
+  const handleDuplicate = (id: string) => {
+    const componentToDuplicate = components.find((c) => c.id === id)
+    if (componentToDuplicate) {
+      const newComponent = {
+        ...componentToDuplicate,
+        id: crypto.randomUUID(),
+      }
+      const newComponents = [...components, newComponent]
+      setComponents(newComponents)
+      addToHistory(newComponents)
+    }
+  }
+
+  const handleDelete = (id: string) => {
+    setComponentToDelete(id)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (componentToDelete) {
+      const newComponents = components.filter((c) => c.id !== componentToDelete)
+      setComponents(newComponents)
+      addToHistory(newComponents)
+      setDeleteConfirmOpen(false)
+      setComponentToDelete(null)
+    }
+  }
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex((prev) => prev - 1)
+      setComponents(history[historyIndex - 1])
+    }
+  }
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex((prev) => prev + 1)
+      setComponents(history[historyIndex + 1])
+    }
+  }
+
+  const handleUpdateComponent = (updatedComponent: EditorComponent) => {
+    const updatedComponents = components.map((c) => (c.id === updatedComponent.id ? updatedComponent : c))
+    setComponents(updatedComponents)
+    addToHistory(updatedComponents)
+    setEditingComponent(null)
+  }
+
+  const handleSaveAsTemplate = async () => {
+    if (!templateName) {
+      toast({
+        title: "Error",
+        description: "Please enter a template name.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      await saveAsTemplate(pageId, templateName)
+      toast({
+        title: "Success",
+        description: "Page saved as template successfully.",
+      })
+      setSaveAsTemplateOpen(false)
+      setTemplateName("")
+    } catch (error) {
+      console.error("Error saving as template:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save as template. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handlePreviewInNewTab = () => {
+    window.open(`/preview/${pageId}`, "_blank")
   }
 
   if (isLoading) {
@@ -703,115 +421,235 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/pages">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-lg font-semibold">Page Editor</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href={`/dashboard/pages/${pageId}/preview`}>
+    <ThemeProvider>
+      <div className="h-screen flex flex-col bg-background">
+        <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/dashboard/pages">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <h1 className="text-lg font-semibold">{pageData.title || "Untitled Page"}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0}>
+              <Undo className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+              <Redo className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setActiveTab(activeTab === "edit" ? "preview" : "edit")}>
               <Eye className="mr-2 h-4 w-4" />
-              Preview
-            </Link>
-          </Button>
-          <Button size="sm" onClick={handleSave} disabled={isSaving}>
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        </div>
-      </header>
-
-      <div className="flex-1 flex">
-        {/* Left Sidebar */}
-        <div
-          className={cn(
-            "w-64 border-r bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
-            !leftSidebarOpen && "-translate-x-full",
-          )}
-        >
-          <ComponentToolbar onAddComponent={handleAddComponent} />
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 relative bg-white">
-          <ScrollArea className="h-full">
-            <EditorCanvas components={components} onEdit={handleEdit} onReorder={handleReorder} />
-          </ScrollArea>
-
-          {/* Sidebar Toggle Buttons */}
-          {!leftSidebarOpen && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute left-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
-              onClick={() => setLeftSidebarOpen(true)}
-            >
-              <ChevronRight className="h-4 w-4" />
+              {activeTab === "edit" ? "Preview" : "Edit"}
             </Button>
-          )}
-
-          {!rightSidebarOpen && (
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute right-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
-              onClick={() => setRightSidebarOpen(true)}
-            >
-              <ChevronLeft className="h-4 w-4" />
+            <Button variant="outline" size="sm" onClick={handlePreviewInNewTab}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Preview in New Tab
             </Button>
-          )}
-        </div>
-
-        {/* Right Sidebar */}
-        <div
-          className={cn(
-            "w-80 border-l bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
-            !rightSidebarOpen && "translate-x-full",
-          )}
-        >
-          <div className="p-4 h-full">
-            <h2 className="font-semibold mb-4">Theme Settings</h2>
-            <ScrollArea className="h-[calc(100%-2rem)]">
-              <ThemeController />
-            </ScrollArea>
-          </div>
-        </div>
-      </div>
-
-      <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
-        <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>
-              Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
-            </DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">{renderEditingForm()}</ScrollArea>
-          <div className="flex justify-end pt-4">
-            <Button onClick={() => handleSave(editingComponent?.content)} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button
+              size="sm"
+              variant={pageData.status === "published" ? "destructive" : "default"}
+              onClick={pageData.status === "published" ? handleUnpublish : handlePublish}
+              disabled={isPublishing}
+            >
+              {pageData.status === "published" ? (
+                <GlobeOff className="mr-2 h-4 w-4" />
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Changes
-                </>
+                <Globe className="mr-2 h-4 w-4" />
               )}
+              {isPublishing ? "Processing..." : pageData.status === "published" ? "Unpublish" : "Publish"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setSaveAsTemplateOpen(true)}>
+              <Template className="mr-2 h-4 w-4" />
+              Save as Template
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+        </header>
+
+        <div className="flex-1 flex">
+          {/* Left Sidebar */}
+          <div
+            className={cn(
+              "w-64 border-r bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
+              !leftSidebarOpen && "-translate-x-full",
+            )}
+          >
+            <Tabs defaultValue="components" className="h-full flex flex-col">
+              <TabsList className="w-full justify-start px-4 border-b rounded-none h-12">
+                <TabsTrigger value="components">Components</TabsTrigger>
+                <TabsTrigger value="templates">Templates</TabsTrigger>
+              </TabsList>
+              <TabsContent value="components" className="flex-1 p-0">
+                <ComponentLibrary onAddComponent={handleAddComponent} />
+              </TabsContent>
+              <TabsContent value="templates" className="flex-1 p-0">
+                <TemplateLibrary onApplyTemplate={(template) => setComponents(template.content)} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 relative bg-white">
+            <ScrollArea className="h-full">
+              {activeTab === "edit" ? (
+                <EditorCanvas
+                  components={components}
+                  onEdit={handleEdit}
+                  onReorder={handleReorder}
+                  onDuplicate={handleDuplicate}
+                  onDelete={handleDelete}
+                />
+              ) : (
+                <LivePreview components={components} previewMode={previewMode} />
+              )}
+            </ScrollArea>
+
+            {/* Preview Mode Buttons */}
+            {activeTab === "preview" && (
+              <div className="absolute top-4 right-4 flex gap-2">
+                <Button
+                  variant={previewMode === "desktop" ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setPreviewMode("desktop")}
+                >
+                  <Laptop className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={previewMode === "tablet" ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setPreviewMode("tablet")}
+                >
+                  <Tablet className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={previewMode === "mobile" ? "secondary" : "outline"}
+                  size="sm"
+                  onClick={() => setPreviewMode("mobile")}
+                >
+                  <Smartphone className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+
+            {/* Sidebar Toggle Buttons */}
+            {!leftSidebarOpen && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute left-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
+                onClick={() => setLeftSidebarOpen(true)}
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            )}
+
+            {!rightSidebarOpen && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute right-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
+                onClick={() => setRightSidebarOpen(true)}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <div
+            className={cn(
+              "w-80 border-l bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
+              !rightSidebarOpen && "translate-x-full",
+            )}
+          >
+            <Tabs defaultValue="theme" className="h-full flex flex-col">
+              <TabsList className="w-full justify-start px-4 border-b rounded-none h-12">
+                <TabsTrigger value="theme">Theme</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="theme" className="flex-1 p-4">
+                <ThemeCustomizer />
+              </TabsContent>
+              <TabsContent value="settings" className="flex-1 p-4">
+                {/* Add page settings component here */}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
+          <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
+              </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] pr-4">
+              {editingComponent && <ComponentEditForm component={editingComponent} onSave={handleUpdateComponent} />}
+            </ScrollArea>
+            <DialogFooter>
+              <Button onClick={() => setEditingComponent(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this component? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={saveAsTemplateOpen} onOpenChange={setSaveAsTemplateOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Save as Template</DialogTitle>
+              <DialogDescription>Enter a name for your new template.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="template-name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="template-name"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSaveAsTemplateOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveAsTemplate}>Save</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </ThemeProvider>
   )
 }
+
+
 
 function HeroTemplate({ content }: { content: any }) {
   return (
@@ -916,7 +754,7 @@ function PricingTemplate({ content }: { content: any }) {
               </ul>
               <a
                 href="#"
-                className="mt-4 inline-block bg-blue-500 hover:bg-blue-600 text-white font-boldpy-2 px-4 rounded-lg"
+                className="mt-4 inline-block bg-blue-500 hover:bg-blue600 text-white font-boldpy-2 px-4 rounded-lg"
               >
                 Select Plan
               </a>

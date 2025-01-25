@@ -1,11 +1,4 @@
-export type ComponentType = 
-  | 'hero'
-  | 'features'
-  | 'content'
-  | 'testimonials'
-  | 'pricing'
-  | 'faq'
-  | 'contact'
+export type ComponentType = "hero" | "features" | "content" | "testimonials" | "pricing" | "faq" | "contact"
 
 export interface EditorComponent {
   id: string
@@ -13,27 +6,28 @@ export interface EditorComponent {
   content: Record<string, any>
 }
 
-export interface Feature {
+export interface Theme {
+  colors: {
+    primary: string
+    secondary: string
+    background: string
+    text: string
+    accent: string
+  }
+  fonts: {
+    body: string
+    heading: string
+  }
+}
+
+export interface LandingPage {
+  id: string
   title: string
   description: string
-  icon: 'Laptop' | 'Book' | 'Users' | 'Trophy'
-}
-
-export interface Testimonial {
-  content: string
-  author: string
-  role: string
-}
-
-export interface PricingPlan {
-  name: string
-  price: string
-  description: string
-  features: string[]
-}
-
-export interface FAQItem {
-  question: string
-  answer: string
+  content: EditorComponent[]
+  status: "draft" | "published"
+  slug?: string
+  createdAt: string
+  updatedAt: string
 }
 
