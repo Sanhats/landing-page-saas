@@ -49,6 +49,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeProvider, useTheme } from "@/lib/theme-context"
 import { cn } from "@/lib/utils"
+//import { useAutosave } from "@/hooks/use-autosave"
+//import { AutosaveIndicator } from "@/components/editor/autosave-indicator"
 
 const defaultComponents: EditorComponent[] = [
   {
@@ -207,6 +209,19 @@ export default function EditorPage() {
   const params = useParams()
   const router = useRouter()
   const pageId = params.id as string
+
+  //const { lastSaved, isSaving: isAutosaving, error: autosaveError } = useAutosave({
+  //  data: {
+  //    content: components,
+  //    title: pageData.title,
+  //    description: pageData.description
+  //  },
+  //  onSave: async (data) => {
+  //    await updateLandingPage(pageId, data)
+  //  },
+  //  debounceMs: 1000,
+  //  interval: 30000,
+  //})
 
   const loadPage = useCallback(async () => {
     setIsLoading(true)
@@ -432,7 +447,13 @@ export default function EditorPage() {
             </Button>
             <h1 className="text-lg font-semibold">{pageData.title || "Untitled Page"}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
+            {/*<AutosaveIndicator
+              lastSaved={lastSaved}
+              isSaving={isAutosaving}
+              error={autosaveError}
+              className="mr-4"
+            />*/}
             <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0}>
               <Undo className="h-4 w-4" />
             </Button>
