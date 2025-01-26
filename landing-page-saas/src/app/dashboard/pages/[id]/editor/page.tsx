@@ -47,142 +47,9 @@ import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { ThemeProvider, useTheme } from "@/lib/theme-context"
+import { ThemeProvider } from "@/lib/theme-context"
 import { cn } from "@/lib/utils"
-//import { useAutosave } from "@/hooks/use-autosave"
-//import { AutosaveIndicator } from "@/components/editor/autosave-indicator"
-
-const defaultComponents: EditorComponent[] = [
-  {
-    id: "1",
-    type: "hero",
-    content: {
-      title: "Welcome to our platform",
-      description: "The best solution for your needs",
-      buttonText: "Get Started",
-    },
-  },
-  {
-    id: "2",
-    type: "features",
-    content: {
-      title: "Our Features",
-      description: "Everything you need to succeed",
-      features: [
-        {
-          title: "Easy to Use",
-          description: "Simple and intuitive interface",
-          icon: "Laptop",
-        },
-        {
-          title: "Documentation",
-          description: "Comprehensive guides",
-          icon: "Book",
-        },
-        {
-          title: "Team Work",
-          description: "Collaborate effectively",
-          icon: "Users",
-        },
-        {
-          title: "Results",
-          description: "Achieve your goals",
-          icon: "Trophy",
-        },
-      ],
-    },
-  },
-  {
-    id: "3",
-    type: "content",
-    content: {
-      title: "About Us",
-      description: "Learn more about our mission and values",
-      imageUrl: "/placeholder.svg",
-    },
-  },
-  {
-    id: "4",
-    type: "testimonials",
-    content: {
-      title: "What Our Customers Say",
-      testimonials: [
-        {
-          content: "Amazing platform! It has transformed our workflow.",
-          author: "John Doe",
-          role: "CEO at TechCorp",
-        },
-        {
-          content: "The best solution we have found in the market.",
-          author: "Jane Smith",
-          role: "CTO at StartupX",
-        },
-        {
-          content: "Incredible support and features.",
-          author: "Mike Johnson",
-          role: "Product Manager",
-        },
-      ],
-    },
-  },
-  {
-    id: "5",
-    type: "pricing",
-    content: {
-      title: "Pricing Plans",
-      description: "Choose the perfect plan for your needs",
-      plans: [
-        {
-          name: "Starter",
-          price: "$9/month",
-          description: "Perfect for getting started",
-          features: ["Basic features", "5 projects", "Basic support"],
-        },
-        {
-          name: "Pro",
-          price: "$29/month",
-          description: "For growing businesses",
-          features: ["Advanced features", "Unlimited projects", "Priority support"],
-        },
-        {
-          name: "Enterprise",
-          price: "Custom",
-          description: "For large organizations",
-          features: ["Custom features", "Dedicated support", "Custom integration"],
-        },
-      ],
-    },
-  },
-  {
-    id: "6",
-    type: "faq",
-    content: {
-      title: "Frequently Asked Questions",
-      faqs: [
-        {
-          question: "How do I get started?",
-          answer: "Simply sign up for an account and follow our quick start guide.",
-        },
-        {
-          question: "What payment methods do you accept?",
-          answer: "We accept all major credit cards and PayPal.",
-        },
-        {
-          question: "Can I cancel my subscription?",
-          answer: "Yes, you can cancel your subscription at any time.",
-        },
-      ],
-    },
-  },
-  {
-    id: "7",
-    type: "contact",
-    content: {
-      title: "Contact Us",
-      description: "Get in touch with our team",
-    },
-  },
-]
+import { title } from "process"
 
 export default function EditorPage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
@@ -209,19 +76,6 @@ export default function EditorPage() {
   const params = useParams()
   const router = useRouter()
   const pageId = params.id as string
-
-  //const { lastSaved, isSaving: isAutosaving, error: autosaveError } = useAutosave({
-  //  data: {
-  //    content: components,
-  //    title: pageData.title,
-  //    description: pageData.description
-  //  },
-  //  onSave: async (data) => {
-  //    await updateLandingPage(pageId, data)
-  //  },
-  //  debounceMs: 1000,
-  //  interval: 30000,
-  //})
 
   const loadPage = useCallback(async () => {
     setIsLoading(true)
@@ -448,12 +302,6 @@ export default function EditorPage() {
             <h1 className="text-lg font-semibold">{pageData.title || "Untitled Page"}</h1>
           </div>
           <div className="flex items-center gap-4">
-            {/*<AutosaveIndicator
-              lastSaved={lastSaved}
-              isSaving={isAutosaving}
-              error={autosaveError}
-              className="mr-4"
-            />*/}
             <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0}>
               <Undo className="h-4 w-4" />
             </Button>
@@ -672,6 +520,9 @@ export default function EditorPage() {
 
 
 
+
+
+
 function HeroTemplate({ content }: { content: any }) {
   return (
     <section className="py-16 bg-gray-100">
@@ -878,7 +729,64 @@ function getDefaultContent(type: ComponentType) {
           },
         ],
       }
-    // Add other component type defaults
+    case "content":
+      return {
+        title: "Our Content",
+        description: "Detailed information about our services",
+        imageUrl: "/default-image.jpg",
+      }
+    case "testimonials":
+      return {
+        title: "What Our Clients Say",
+        testimonials: [
+          {
+            content: "This is the best service I have ever used.",
+            author: "John Doe",
+            role: "CEO, Company",
+          },
+          {
+            content: "Highly recommend to everyone.",
+            author: "Jane Smith",
+            role: "CTO, Another Company",
+          },
+        ],
+      }
+    case "pricing":
+      return {
+        title: "Our Pricing Plans",
+        description: "Choose the plan that suits you best",
+        plans: [
+          {
+            name: "Basic",
+            price: "$10/month",
+            features: ["Feature A", "Feature B", "Feature C"],
+          },
+          {
+            name: "Pro",
+            price: "$20/month",
+            features: ["Feature A", "Feature B", "Feature C", "Feature D"],
+          },
+        ],
+      }
+    case "faq":
+      return {
+        title: "Frequently Asked Questions",
+        faqs: [
+          {
+            question: "What is this service?",
+            answer: "This service provides...",
+          },
+          {
+            question: "How do I sign up?",
+            answer: "You can sign up by...",
+          },
+        ],
+      }
+    case "contact":
+      return {
+        title: "Contact Us",
+        description: "We would love to hear from you",
+      }
     default:
       return {}
   }

@@ -9,10 +9,10 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core"
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { ComponentType, type EditorComponent } from "@/types/editor"
+import { type EditorComponent } from "@/types/editor"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { GripVertical, Edit, Copy, Trash2 } from "lucide-react"
