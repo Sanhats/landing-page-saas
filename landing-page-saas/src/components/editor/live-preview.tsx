@@ -1,21 +1,44 @@
+// components/editor/live-preview.tsx
 "use client"
 
+import dynamic from "next/dynamic"
 import type { EditorComponent } from "@/types/editor"
-import { HeroTemplate } from "@/components/editor/templates/hero-template"
-import { FeaturesTemplate } from "@/components/editor/templates/features-template"
-import { ContentTemplate } from "@/components/editor/templates/content-template"
-import { TestimonialsTemplate } from "@/components/editor/templates/testimonials-template"
-import { PricingTemplate } from "@/components/editor/templates/pricing-template"
-import { FAQTemplate } from "@/components/editor/templates/faq-template"
-import { ContactTemplate } from "@/components/editor/templates/contact-template"
-import { cn } from "@/lib/utils"
+
+// Asegúrate de que todos los dynamic imports tengan { ssr: false }
+const HeroTemplate = dynamic(
+  () => import("@/components/editor/templates/hero-template").then((mod) => mod.HeroTemplate),
+  { ssr: false }
+)
+const FeaturesTemplate = dynamic(
+  () => import("@/components/editor/templates/features-template").then((mod) => mod.FeaturesTemplate),
+  { ssr: false }
+)
+const ContentTemplate = dynamic(
+  () => import("@/components/editor/templates/content-template").then((mod) => mod.ContentTemplate),
+  { ssr: false }
+)
+const TestimonialsTemplate = dynamic(
+  () => import("@/components/editor/templates/testimonials-template").then((mod) => mod.TestimonialsTemplate),
+  { ssr: false }
+)
+const PricingTemplate = dynamic(
+  () => import("@/components/editor/templates/pricing-template").then((mod) => mod.PricingTemplate),
+  { ssr: false }
+)
+const FAQTemplate = dynamic(
+  () => import("@/components/editor/templates/faq-template").then((mod) => mod.FAQTemplate),
+  { ssr: false }
+)
+const ContactTemplate = dynamic(
+  () => import("@/components/editor/templates/contact-template").then((mod) => mod.ContactTemplate),
+  { ssr: false }
+)
 
 interface LivePreviewProps {
   components: EditorComponent[]
-  previewMode: "desktop" | "tablet" | "mobile"
 }
 
-export function LivePreview({ components, previewMode }: LivePreviewProps) {
+export function LivePreview({ components }: LivePreviewProps) {
   const renderComponent = (component: EditorComponent) => {
     switch (component.type) {
       case "hero":
@@ -37,17 +60,5 @@ export function LivePreview({ components, previewMode }: LivePreviewProps) {
     }
   }
 
-  return (
-    <div
-      className={cn(
-        "mx-auto transition-all duration-200 ease-in-out",
-        previewMode === "desktop" && "w-full",
-        previewMode === "tablet" && "max-w-[768px]",
-        previewMode === "mobile" && "max-w-[375px]",
-      )}
-    >
-      {components.map(renderComponent)}
-    </div>
-  )
+  return <div className="w-full">{components.map(renderComponent)}</div>
 }
-
