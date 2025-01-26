@@ -3,6 +3,7 @@ export type ComponentType = "hero" | "features" | "content" | "testimonials" | "
 export interface EditorComponent {
   id: string
   type: ComponentType
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: Record<string, any>
 }
 

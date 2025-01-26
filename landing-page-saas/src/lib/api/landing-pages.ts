@@ -357,3 +357,11 @@ export async function unpublishLandingPage(id: string): Promise<LandingPage> {
   return data
 }
 
+export async function saveAsTemplate(pageId: string, templateName: string) {
+  // Implementación de la función
+}
+
+export async function getTemplates() {
+  // Implementación de la función
+}
+
