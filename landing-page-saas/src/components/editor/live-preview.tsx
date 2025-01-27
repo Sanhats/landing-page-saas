@@ -1,38 +1,41 @@
-// components/editor/live-preview.tsx
 "use client"
 
-import dynamic from "next/dynamic"
+import { HeroTemplate } from "@/components/editor/templates/hero-template"
+import { FeaturesTemplate } from "@/components/editor/templates/features-template"
+import { ContentTemplate } from "@/components/editor/templates/content-template"
+import { TestimonialsTemplate } from "@/components/editor/templates/testimonials-template"
+import { PricingTemplate } from "@/components/editor/templates/pricing-template"
+import { FAQTemplate } from "@/components/editor/templates/faq-template"
+import { ContactTemplate } from "@/components/editor/templates/contact-template"
 import type { EditorComponent } from "@/types/editor"
 
-// Asegúrate de que todos los dynamic imports tengan { ssr: false }
-const HeroTemplate = dynamic(
-  () => import("@/components/editor/templates/hero-template").then((mod) => mod.HeroTemplate),
-  { ssr: false }
-)
-const FeaturesTemplate = dynamic(
-  () => import("@/components/editor/templates/features-template").then((mod) => mod.FeaturesTemplate),
-  { ssr: false }
-)
-const ContentTemplate = dynamic(
-  () => import("@/components/editor/templates/content-template").then((mod) => mod.ContentTemplate),
-  { ssr: false }
-)
-const TestimonialsTemplate = dynamic(
-  () => import("@/components/editor/templates/testimonials-template").then((mod) => mod.TestimonialsTemplate),
-  { ssr: false }
-)
-const PricingTemplate = dynamic(
-  () => import("@/components/editor/templates/pricing-template").then((mod) => mod.PricingTemplate),
-  { ssr: false }
-)
-const FAQTemplate = dynamic(
-  () => import("@/components/editor/templates/faq-template").then((mod) => mod.FAQTemplate),
-  { ssr: false }
-)
-const ContactTemplate = dynamic(
-  () => import("@/components/editor/templates/contact-template").then((mod) => mod.ContactTemplate),
-  { ssr: false }
-)
+//const HeroTemplate = dynamic(
+//  () => import("@/components/editor/templates/hero-template").then((mod) => mod.HeroTemplate),
+//  { ssr: true },
+//)
+//const FeaturesTemplate = dynamic(
+//  () => import("@/components/editor/templates/features-template").then((mod) => mod.FeaturesTemplate),
+//  { ssr: true },
+//)
+//const ContentTemplate = dynamic(
+//  () => import("@/components/editor/templates/content-template").then((mod) => mod.ContentTemplate),
+//  { ssr: true },
+//)
+//const TestimonialsTemplate = dynamic(
+//  () => import("@/components/editor/templates/testimonials-template").then((mod) => mod.TestimonialsTemplate),
+//  { ssr: true },
+//)
+//const PricingTemplate = dynamic(
+//  () => import("@/components/editor/templates/pricing-template").then((mod) => mod.PricingTemplate),
+//  { ssr: true },
+//)
+//const FAQTemplate = dynamic(() => import("@/components/editor/templates/faq-template").then((mod) => mod.FAQTemplate), {
+//  ssr: true,
+//})
+//const ContactTemplate = dynamic(
+//  () => import("@/components/editor/templates/contact-template").then((mod) => mod.ContactTemplate),
+//  { ssr: true },
+//)
 
 interface LivePreviewProps {
   components: EditorComponent[]
@@ -62,3 +65,4 @@ export function LivePreview({ components }: LivePreviewProps) {
 
   return <div className="w-full">{components.map(renderComponent)}</div>
 }
+

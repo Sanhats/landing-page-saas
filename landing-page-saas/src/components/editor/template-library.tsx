@@ -26,8 +26,9 @@ export function TemplateLibrary({ onApplyTemplate }: TemplateLibraryProps) {
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
+        setIsLoading(true)
         const fetchedTemplates = await getTemplates()
-        setTemplates(fetchedTemplates)
+        setTemplates(fetchedTemplates || [])
       } catch (error) {
         console.error("Error fetching templates:", error)
         toast({
@@ -35,6 +36,7 @@ export function TemplateLibrary({ onApplyTemplate }: TemplateLibraryProps) {
           description: "Failed to load templates. Please try again.",
           variant: "destructive",
         })
+        setTemplates([])
       } finally {
         setIsLoading(false)
       }
@@ -54,16 +56,20 @@ export function TemplateLibrary({ onApplyTemplate }: TemplateLibraryProps) {
   return (
     <ScrollArea className="h-full">
       <div className="p-4 space-y-4">
-        {templates.map((template) => (
-          <Card key={template.id}>
-            <CardHeader>
-              <CardTitle>{template.name}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={() => onApplyTemplate(template)}>Apply Template</Button>
-            </CardContent>
-          </Card>
-        ))}
+        {templates && templates.length > 0 ? (
+          templates.map((template) => (
+            <Card key={template.id}>
+              <CardHeader>
+                <CardTitle>{template.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Button onClick={() => onApplyTemplate(template)}>Apply Template</Button>
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="text-center text-muted-foreground">No templates available</div>
+        )}
       </div>
     </ScrollArea>
   )

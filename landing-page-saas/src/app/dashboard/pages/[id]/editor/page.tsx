@@ -9,7 +9,7 @@ import { ThemeCustomizer } from "@/components/editor/theme-customizer"
 import { ComponentEditForm } from "@/components/editor/component-edit-form"
 import { TemplateLibrary } from "@/components/editor/template-library"
 import { ExportHtmlButton } from "@/components/editor/export-html-button"
-import type { ComponentType, EditorComponent } from "@/types/editor"
+import type { ComponentType, EditorComponent, ComponentTemplate } from "@/types/editor"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -50,6 +50,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeProvider } from "@/lib/theme-context"
 import { cn } from "@/lib/utils"
+import { PreviewToolbar, PreviewFrame } from "@/components/editor/preview"
+import { TemplateSelector } from "@/components/editor/template-selector"
+import type { PreviewMode } from "@/types/preview"
 
 export default function EditorPage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
@@ -69,9 +72,11 @@ export default function EditorPage() {
     description: "",
     status: "draft",
   })
-  const [previewMode, setPreviewMode] = useState<"desktop" | "tablet" | "mobile">("desktop")
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop")
   const [saveAsTemplateOpen, setSaveAsTemplateOpen] = useState(false)
   const [templateName, setTemplateName] = useState("")
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
+  const [selectedComponentType, setSelectedComponentType] = useState<ComponentType | null>(null)
   const { toast } = useToast()
   const params = useParams()
   const router = useRouter()
@@ -117,10 +122,22 @@ export default function EditorPage() {
     [historyIndex],
   )
 
-  const handleAddComponent = (component: EditorComponent) => {
-    const newComponents = [...components, component]
-    setComponents(newComponents)
-    addToHistory(newComponents)
+  const handleAddComponent = (type: ComponentType) => {
+    setSelectedComponentType(type)
+    setShowTemplateSelector(true)
+  }
+
+  const handleTemplateSelect = (template: ComponentTemplate) => {
+    const newComponent: EditorComponent = {
+      id: crypto.randomUUID(),
+      type: template.type,
+      content: { ...template.content },
+      template: template.id,
+      styles: { ...template.styles },
+    }
+    setComponents([...components, newComponent])
+    setShowTemplateSelector(false)
+    setSelectedComponentType(null)
   }
 
   const handleEdit = (id: string) => {
@@ -364,69 +381,22 @@ export default function EditorPage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 relative bg-white">
-            <ScrollArea className="h-full">
-              {activeTab === "edit" ? (
-                <EditorCanvas
-                  components={components}
-                  onEdit={handleEdit}
-                  onReorder={handleReorder}
-                  onDuplicate={handleDuplicate}
-                  onDelete={handleDelete}
-                />
-              ) : (
-                <LivePreview components={components} previewMode={previewMode} />
-              )}
-            </ScrollArea>
-
-            {/* Preview Mode Buttons */}
-            {activeTab === "preview" && (
-              <div className="absolute top-4 right-4 flex gap-2">
-                <Button
-                  variant={previewMode === "desktop" ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setPreviewMode("desktop")}
-                >
-                  <Laptop className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={previewMode === "tablet" ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setPreviewMode("tablet")}
-                >
-                  <Tablet className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={previewMode === "mobile" ? "secondary" : "outline"}
-                  size="sm"
-                  onClick={() => setPreviewMode("mobile")}
-                >
-                  <Smartphone className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
-
-            {/* Sidebar Toggle Buttons */}
-            {!leftSidebarOpen && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="absolute left-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
-                onClick={() => setLeftSidebarOpen(true)}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            )}
-
-            {!rightSidebarOpen && (
-              <Button
-                variant="secondary"
-                size="sm"
-                className="absolute right-4 top-1/2 -translate-y-1/2 shadow-lg bg-white hover:bg-gray-100"
-                onClick={() => setRightSidebarOpen(true)}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
+          <div className="flex-1 relative">
+            {activeTab === "edit" ? (
+              <EditorCanvas
+                components={components}
+                onEdit={handleEdit}
+                onReorder={handleReorder}
+                onDuplicate={handleDuplicate}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <>
+                <PreviewToolbar mode={previewMode} onModeChange={setPreviewMode} />
+                <PreviewFrame mode={previewMode}>
+                  <LivePreview components={components} />
+                </PreviewFrame>
+              </>
             )}
           </div>
 
@@ -512,6 +482,18 @@ export default function EditorPage() {
               </Button>
               <Button onClick={handleSaveAsTemplate}>Save</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showTemplateSelector} onOpenChange={setShowTemplateSelector}>
+          <DialogContent className="max-w-4xl">
+            {selectedComponentType && (
+              <TemplateSelector
+                type={selectedComponentType}
+                onSelect={handleTemplateSelect}
+                onClose={() => setShowTemplateSelector(false)}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>

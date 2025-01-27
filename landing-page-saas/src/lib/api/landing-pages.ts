@@ -1,5 +1,5 @@
 import { createClientSideSupabaseClient } from "@/lib/supabase-client"
-import type { LandingPage, EditorComponent } from "@/types/editor"
+import type { LandingPage, EditorComponent, Template } from "@/types/editor"
 
 const defaultComponents: EditorComponent[] = [
   {
@@ -361,7 +361,17 @@ export async function saveAsTemplate(pageId: string, templateName: string) {
   // Implementación de la función
 }
 
-export async function getTemplates() {
-  // Implementación de la función
+export async function getTemplates(): Promise<Template[]> {
+  try {
+    const supabase = createClientSideSupabaseClient()
+    const { data, error } = await supabase.from("templates").select("*").order("created_at", { ascending: false })
+
+    if (error) throw error
+
+    return data || []
+  } catch (error) {
+    console.error("Error fetching templates:", error)
+    throw error
+  }
 }
 
