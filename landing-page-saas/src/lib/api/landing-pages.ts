@@ -375,3 +375,27 @@ export async function getTemplates(): Promise<Template[]> {
   }
 }
 
+export async function saveLandingPage(pageData: Partial<LandingPage>): Promise<LandingPage> {
+  const supabase = createClientSideSupabaseClient()
+  const { data, error } = await supabase.from("landing_pages").upsert(pageData).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function loadLandingPage(id: string): Promise<LandingPage> {
+  const supabase = createClientSideSupabaseClient()
+  const { data, error } = await supabase.from("landing_pages").select("*").eq("id", id).single()
+
+  if (error) throw error
+  return data
+}
+
+export async function listLandingPages(): Promise<LandingPage[]> {
+  const supabase = createClientSideSupabaseClient()
+  const { data, error } = await supabase.from("landing_pages").select("*").order("updated_at", { ascending: false })
+
+  if (error) throw error
+  return data || []
+}
+

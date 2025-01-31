@@ -29,18 +29,24 @@ export function ContactTemplate({ content, onEdit }: ContactTemplateProps) {
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2
             className="text-3xl font-bold tracking-tight sm:text-4xl"
-            style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}
+            style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
           >
             {content.title}
           </h2>
-          <p className="mt-6 text-lg leading-8" style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>
+          <p
+            className="mt-6 text-lg leading-8"
+            style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}
+          >
             {content.description}
           </p>
         </div>
         <form className="mx-auto max-w-xl">
           <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
             <div>
-              <Label htmlFor="first-name" style={{ color: theme.colors.primary, fontFamily: theme.fonts.body }}>
+              <Label
+                htmlFor="first-name"
+                style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
+              >
                 First name
               </Label>
               <Input
@@ -58,7 +64,10 @@ export function ContactTemplate({ content, onEdit }: ContactTemplateProps) {
               />
             </div>
             <div>
-              <Label htmlFor="last-name" style={{ color: theme.colors.primary, fontFamily: theme.fonts.body }}>
+              <Label
+                htmlFor="last-name"
+                style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
+              >
                 Last name
               </Label>
               <Input
@@ -76,7 +85,10 @@ export function ContactTemplate({ content, onEdit }: ContactTemplateProps) {
               />
             </div>
             <div className="sm:col-span-2">
-              <Label htmlFor="email" style={{ color: theme.colors.primary, fontFamily: theme.fonts.body }}>
+              <Label
+                htmlFor="email"
+                style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
+              >
                 Email
               </Label>
               <Input
@@ -94,7 +106,10 @@ export function ContactTemplate({ content, onEdit }: ContactTemplateProps) {
               />
             </div>
             <div className="sm:col-span-2">
-              <Label htmlFor="message" style={{ color: theme.colors.primary, fontFamily: theme.fonts.body }}>
+              <Label
+                htmlFor="message"
+                style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
+              >
                 Message
               </Label>
               <Textarea
@@ -116,9 +131,9 @@ export function ContactTemplate({ content, onEdit }: ContactTemplateProps) {
               type="submit"
               className="w-full"
               style={{
-                backgroundColor: theme.button.backgroundColor,
-                color: theme.button.textColor,
-                fontFamily: theme.fonts.body,
+                backgroundColor: theme.colors.primary,
+                color: theme.colors.background,
+                fontFamily: theme.typography.fontFamily.sans,
                 borderRadius: theme.borderRadius,
               }}
             >

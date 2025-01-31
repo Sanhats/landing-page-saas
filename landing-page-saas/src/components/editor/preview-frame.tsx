@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import type { PreviewMode } from "@/types/editor"
+import type React from "react" // Import React
 
 interface PreviewFrameProps {
   mode: PreviewMode

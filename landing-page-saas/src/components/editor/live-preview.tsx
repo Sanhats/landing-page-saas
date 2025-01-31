@@ -9,34 +9,6 @@ import { FAQTemplate } from "@/components/editor/templates/faq-template"
 import { ContactTemplate } from "@/components/editor/templates/contact-template"
 import type { EditorComponent } from "@/types/editor"
 
-//const HeroTemplate = dynamic(
-//  () => import("@/components/editor/templates/hero-template").then((mod) => mod.HeroTemplate),
-//  { ssr: true },
-//)
-//const FeaturesTemplate = dynamic(
-//  () => import("@/components/editor/templates/features-template").then((mod) => mod.FeaturesTemplate),
-//  { ssr: true },
-//)
-//const ContentTemplate = dynamic(
-//  () => import("@/components/editor/templates/content-template").then((mod) => mod.ContentTemplate),
-//  { ssr: true },
-//)
-//const TestimonialsTemplate = dynamic(
-//  () => import("@/components/editor/templates/testimonials-template").then((mod) => mod.TestimonialsTemplate),
-//  { ssr: true },
-//)
-//const PricingTemplate = dynamic(
-//  () => import("@/components/editor/templates/pricing-template").then((mod) => mod.PricingTemplate),
-//  { ssr: true },
-//)
-//const FAQTemplate = dynamic(() => import("@/components/editor/templates/faq-template").then((mod) => mod.FAQTemplate), {
-//  ssr: true,
-//})
-//const ContactTemplate = dynamic(
-//  () => import("@/components/editor/templates/contact-template").then((mod) => mod.ContactTemplate),
-//  { ssr: true },
-//)
-
 interface LivePreviewProps {
   components: EditorComponent[]
 }

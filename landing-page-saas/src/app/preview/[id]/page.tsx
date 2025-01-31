@@ -10,18 +10,14 @@ export default async function PreviewPage({ params }: { params: { id: string } }
   const supabase = createServerComponentClient({ cookies })
 
   // First try to get the page without authentication check
-  const { data: publicPage, error: publicError } = await supabase
-    .from("landing_pages")
-    .select("*")
-    .eq("id", params.id)
-    .single()
+  const { data: publicPage } = await supabase.from("landing_pages").select("*").eq("id", params.id).single()
 
   // If the page is published, show it regardless of authentication
   if (publicPage && publicPage.status === "published") {
     return (
       <ThemeProvider>
         <div className="min-h-screen bg-background">
-          <LivePreview components={publicPage.content} previewMode="desktop" />
+          <LivePreview components={publicPage.content} />
         </div>
       </ThemeProvider>
     )
@@ -58,7 +54,7 @@ export default async function PreviewPage({ params }: { params: { id: string } }
   return (
     <ThemeProvider>
       <div className="min-h-screen bg-background">
-        <LivePreview components={privatePage.content} previewMode="desktop" />
+        <LivePreview components={privatePage.content} />
       </div>
     </ThemeProvider>
   )

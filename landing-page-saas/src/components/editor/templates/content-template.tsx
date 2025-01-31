@@ -29,11 +29,14 @@ export function ContentTemplate({ content, onEdit }: ContentTemplateProps) {
             <div>
               <h2
                 className="text-3xl font-bold tracking-tight sm:text-4xl"
-                style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}
+                style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
               >
                 {content.title}
               </h2>
-              <p className="mt-6 text-lg leading-8" style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>
+              <p
+                className="mt-6 text-lg leading-8"
+                style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}
+              >
                 {content.description}
               </p>
             </div>

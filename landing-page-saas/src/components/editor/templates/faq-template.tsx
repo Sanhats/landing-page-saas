@@ -37,7 +37,7 @@ export function FAQTemplate({ content, onEdit }: FAQTemplateProps) {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2
           className="text-3xl font-bold tracking-tight sm:text-4xl text-center mb-12"
-          style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}
+          style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
         >
           {content.title}
         </h2>
@@ -48,7 +48,7 @@ export function FAQTemplate({ content, onEdit }: FAQTemplateProps) {
                 onClick={() => toggleItem(`item-${index}`)}
                 style={{
                   color: theme.colors.primary,
-                  fontFamily: theme.fonts.heading,
+                  fontFamily: theme.typography.fontFamily.sans,
                 }}
                 data-state={openItem === `item-${index}` ? "open" : "closed"}
               >
@@ -57,7 +57,7 @@ export function FAQTemplate({ content, onEdit }: FAQTemplateProps) {
               <AccordionContent
                 style={{
                   color: theme.colors.text,
-                  fontFamily: theme.fonts.body,
+                  fontFamily: theme.typography.fontFamily.sans,
                 }}
                 data-state={openItem === `item-${index}` ? "open" : "closed"}
               >

@@ -1,5 +1,4 @@
 "use client"
-
 import {
   DndContext,
   closestCenter,
@@ -12,7 +11,7 @@ import {
 import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { type EditorComponent } from "@/types/editor"
+import type { EditorComponent } from "@/types/editor"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { GripVertical, Edit, Copy, Trash2 } from "lucide-react"

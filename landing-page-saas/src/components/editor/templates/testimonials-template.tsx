@@ -32,7 +32,7 @@ export function TestimonialsTemplate({ content, onEdit }: TestimonialsTemplatePr
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <h2
           className="text-3xl font-bold tracking-tight sm:text-4xl text-center mb-12"
-          style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}
+          style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
         >
           {content.title}
         </h2>
@@ -48,14 +48,23 @@ export function TestimonialsTemplate({ content, onEdit }: TestimonialsTemplatePr
                 boxShadow: theme.boxShadow,
               }}
             >
-              <p className="text-lg mb-4" style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>
+              <p
+                className="text-lg mb-4"
+                style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}
+              >
                 "{testimonial.content}"
               </p>
               <div>
-                <p className="font-semibold" style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}>
+                <p
+                  className="font-semibold"
+                  style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
+                >
                   {testimonial.author}
                 </p>
-                <p className="text-sm" style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>
+                <p
+                  className="text-sm"
+                  style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}
+                >
                   {testimonial.role}
                 </p>
               </div>

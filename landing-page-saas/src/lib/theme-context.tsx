@@ -1,5 +1,6 @@
 "use client"
 
+import type React from "react"
 import { createContext, useContext, useState } from "react"
 
 export interface Theme {
@@ -9,23 +10,34 @@ export interface Theme {
     background: string
     text: string
     accent: string
+    muted: string
   }
-  fonts: {
-    body: string
-    heading: string
+  typography: {
+    fontFamily: {
+      sans: string
+      serif: string
+      mono: string
+    }
+    fontSize: {
+      base: string
+      lg: string
+      xl: string
+      "2xl": string
+      "3xl": string
+    }
+    fontWeight: {
+      normal: string
+      medium: string
+      bold: string
+    }
   }
-  borderRadius: string
-  boxShadow: string
   spacing: {
     small: string
     medium: string
     large: string
   }
-  button: {
-    backgroundColor: string
-    textColor: string
-    hoverBackgroundColor: string
-  }
+  borderRadius: string
+  boxShadow: string
 }
 
 const defaultTheme: Theme = {
@@ -35,23 +47,34 @@ const defaultTheme: Theme = {
     background: "#FFFFFF",
     text: "#333333",
     accent: "#EAD8B1",
+    muted: "#F3F4F6",
   },
-  fonts: {
-    body: "Inter, sans-serif",
-    heading: "Poppins, sans-serif",
+  typography: {
+    fontFamily: {
+      sans: "Inter, sans-serif",
+      serif: "Georgia, serif",
+      mono: "Menlo, monospace",
+    },
+    fontSize: {
+      base: "1rem",
+      lg: "1.125rem",
+      xl: "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+    },
+    fontWeight: {
+      normal: "400",
+      medium: "500",
+      bold: "700",
+    },
   },
-  borderRadius: "0.5rem",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   spacing: {
-    small: "1rem",
-    medium: "2rem",
-    large: "3rem",
+    small: "0.5rem",
+    medium: "1rem",
+    large: "2rem",
   },
-  button: {
-    backgroundColor: "#3A6D8C",
-    textColor: "#FFFFFF",
-    hoverBackgroundColor: "#2A5D7C",
-  },
+  borderRadius: "0.375rem",
+  boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
 }
 
 interface ThemeContextType {
@@ -74,3 +97,4 @@ export function useTheme() {
   }
   return context
 }
+

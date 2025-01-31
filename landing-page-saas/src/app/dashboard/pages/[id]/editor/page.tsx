@@ -9,15 +9,15 @@ import { ThemeCustomizer } from "@/components/editor/theme-customizer"
 import { ComponentEditForm } from "@/components/editor/component-edit-form"
 import { TemplateLibrary } from "@/components/editor/template-library"
 import { ExportHtmlButton } from "@/components/editor/export-html-button"
-import type { ComponentType, EditorComponent, ComponentTemplate } from "@/types/editor"
+import type { ComponentType, EditorComponent, ComponentTemplate, LandingPage } from "@/types/editor"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/use-toast"
 import {
-  getLandingPage,
-  updateLandingPage,
   publishLandingPage,
   unpublishLandingPage,
   saveAsTemplate,
+  saveLandingPage,
+  loadLandingPage,
 } from "@/lib/api/landing-pages"
 import {
   Loader2,
@@ -29,9 +29,6 @@ import {
   Globe,
   GlobeIcon as GlobeOff,
   LayoutTemplateIcon as Template,
-  Smartphone,
-  Tablet,
-  Laptop,
   ExternalLink,
 } from "lucide-react"
 import Link from "next/link"
@@ -47,12 +44,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { ChevronLeft, ChevronRight } from "lucide-react"
 import { ThemeProvider } from "@/lib/theme-context"
 import { cn } from "@/lib/utils"
-import { PreviewToolbar, PreviewFrame } from "@/components/editor/preview"
+import { PreviewToolbar } from "@/components/editor/preview-toolbar"
+import { PreviewFrame } from "@/components/editor/preview-frame"
 import { TemplateSelector } from "@/components/editor/template-selector"
-import type { PreviewMode } from "@/types/preview"
+import type { PreviewMode } from "@/types/editor"
+import type { DragEndEvent } from "@dnd-kit/core"
+import { arrayMove } from "@/lib/utils"
 
 export default function EditorPage() {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true)
@@ -67,10 +66,14 @@ export default function EditorPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [componentToDelete, setComponentToDelete] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"edit" | "preview">("edit")
-  const [pageData, setPageData] = useState<{ title: string; description: string; status: "draft" | "published" }>({
+  const [pageData, setPageData] = useState<LandingPage>({
+    id: "",
     title: "",
     description: "",
+    content: [],
     status: "draft",
+    createdAt: "",
+    updatedAt: "",
   })
   const [previewMode, setPreviewMode] = useState<PreviewMode>("desktop")
   const [saveAsTemplateOpen, setSaveAsTemplateOpen] = useState(false)
@@ -85,18 +88,12 @@ export default function EditorPage() {
   const loadPage = useCallback(async () => {
     setIsLoading(true)
     try {
-      const page = await getLandingPage(pageId)
-      if (page) {
-        setPageData({
-          title: page.title,
-          description: page.description || "",
-          status: page.status as "draft" | "published",
-        })
-        if (page.content && Array.isArray(page.content)) {
-          setComponents(page.content as EditorComponent[])
-          setHistory([page.content as EditorComponent[]])
-          setHistoryIndex(0)
-        }
+      const page = await loadLandingPage(pageId)
+      setPageData(page)
+      if (page.content && Array.isArray(page.content)) {
+        setComponents(page.content as EditorComponent[])
+        setHistory([page.content as EditorComponent[]])
+        setHistoryIndex(0)
       }
     } catch (error) {
       console.error("Error loading page:", error)
@@ -135,7 +132,9 @@ export default function EditorPage() {
       template: template.id,
       styles: { ...template.styles },
     }
-    setComponents([...components, newComponent])
+    const newComponents = [...components, newComponent]
+    setComponents(newComponents)
+    addToHistory(newComponents)
     setShowTemplateSelector(false)
     setSelectedComponentType(null)
   }
@@ -150,16 +149,20 @@ export default function EditorPage() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await updateLandingPage(pageId, { content: components, title: pageData.title, description: pageData.description })
+      const updatedPage = await saveLandingPage({
+        ...pageData,
+        content: components,
+      })
+      setPageData(updatedPage)
       toast({
         title: "Success",
-        description: "Changes saved successfully.",
+        description: "Page saved successfully.",
       })
     } catch (error) {
-      console.error("Error saving changes:", error)
+      console.error("Error saving page:", error)
       toast({
         title: "Error",
-        description: "Failed to save changes. Please try again.",
+        description: "Failed to save page. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -170,8 +173,8 @@ export default function EditorPage() {
   const handlePublish = async () => {
     setIsPublishing(true)
     try {
-      await publishLandingPage(pageId)
-      setPageData((prev) => ({ ...prev, status: "published" }))
+      const publishedPage = await publishLandingPage(pageId)
+      setPageData(publishedPage)
       toast({
         title: "Success",
         description: "Page published successfully.",
@@ -191,8 +194,8 @@ export default function EditorPage() {
   const handleUnpublish = async () => {
     setIsPublishing(true)
     try {
-      await unpublishLandingPage(pageId)
-      setPageData((prev) => ({ ...prev, status: "draft" }))
+      const unpublishedPage = await unpublishLandingPage(pageId)
+      setPageData(unpublishedPage)
       toast({
         title: "Success",
         description: "Page unpublished successfully.",
@@ -209,12 +212,17 @@ export default function EditorPage() {
     }
   }
 
-  const handleReorder = (startIndex: number, endIndex: number) => {
-    const result = Array.from(components)
-    const [reorderedItem] = result.splice(startIndex, 1)
-    result.splice(endIndex, 0, reorderedItem)
-    setComponents(result)
-    addToHistory(result)
+  const handleReorder = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = components.findIndex((item) => item.id === active.id)
+      const newIndex = components.findIndex((item) => item.id === over.id)
+
+      const newComponents = arrayMove(components, oldIndex, newIndex)
+      setComponents(newComponents)
+      addToHistory(newComponents)
+    }
   }
 
   const handleDuplicate = (id: string) => {

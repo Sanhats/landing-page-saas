@@ -35,11 +35,14 @@ export function PricingTemplate({ content, onEdit }: PricingTemplateProps) {
         <div className="mx-auto max-w-2xl text-center mb-16">
           <h2
             className="text-3xl font-bold tracking-tight sm:text-4xl"
-            style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}
+            style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
           >
             {content.title}
           </h2>
-          <p className="mt-6 text-lg leading-8" style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>
+          <p
+            className="mt-6 text-lg leading-8"
+            style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}
+          >
             {content.description}
           </p>
         </div>
@@ -57,17 +60,17 @@ export function PricingTemplate({ content, onEdit }: PricingTemplateProps) {
             >
               <h3
                 className="text-2xl font-bold mb-4"
-                style={{ color: theme.colors.primary, fontFamily: theme.fonts.heading }}
+                style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}
               >
                 {plan.name}
               </h3>
               <p
                 className="text-4xl font-bold mb-6"
-                style={{ color: theme.colors.accent, fontFamily: theme.fonts.heading }}
+                style={{ color: theme.colors.accent, fontFamily: theme.typography.fontFamily.sans }}
               >
                 {plan.price}
               </p>
-              <p className="mb-6" style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>
+              <p className="mb-6" style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}>
                 {plan.description}
               </p>
               <ul className="space-y-4 mb-8">
@@ -83,16 +86,18 @@ export function PricingTemplate({ content, onEdit }: PricingTemplateProps) {
                     >
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span style={{ color: theme.colors.text, fontFamily: theme.fonts.body }}>{feature}</span>
+                    <span style={{ color: theme.colors.text, fontFamily: theme.typography.fontFamily.sans }}>
+                      {feature}
+                    </span>
                   </li>
                 ))}
               </ul>
               <Button
                 className="w-full"
                 style={{
-                  backgroundColor: theme.button.backgroundColor,
-                  color: theme.button.textColor,
-                  fontFamily: theme.fonts.body,
+                  backgroundColor: theme.colors.primary,
+                  color: theme.colors.background,
+                  fontFamily: theme.typography.fontFamily.sans,
                   borderRadius: theme.borderRadius,
                 }}
               >
