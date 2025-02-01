@@ -1,6 +1,6 @@
 "use client"
 
-import type React from "react"
+import { useState } from "react"
 import { useTheme } from "@/lib/theme-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,9 +9,13 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Undo, Eye } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { saveLandingPage } from "@/lib/api/landing-pages"
+import { useToast } from "@/components/ui/use-toast"
 
-export function ThemeCustomizer() {
+export function ThemeCustomizer({ pageId }: { pageId: string }) {
   const { theme, setTheme } = useTheme()
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
 
   const handleColorChange = (colorKey: keyof typeof theme.colors) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setTheme((prevTheme) => ({
@@ -83,6 +87,29 @@ export function ThemeCustomizer() {
       borderRadius: "0.375rem",
       boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)",
     })
+  }
+
+  const saveTheme = async () => {
+    setIsLoading(true)
+    try {
+      await saveLandingPage({
+        id: pageId,
+        theme: theme,
+      })
+      toast({
+        title: "Success",
+        description: "Theme saved successfully.",
+      })
+    } catch (error) {
+      console.error("Error saving theme:", error)
+      toast({
+        title: "Error",
+        description: "Failed to save theme. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -239,6 +266,9 @@ export function ThemeCustomizer() {
         <Button onClick={resetTheme} variant="outline" className="w-full">
           <Undo className="mr-2 h-4 w-4" />
           Reset to Default Theme
+        </Button>
+        <Button onClick={saveTheme} className="w-full" disabled={isLoading}>
+          {isLoading ? "Saving..." : "Save Theme"}
         </Button>
       </div>
     </ScrollArea>

@@ -3,60 +3,44 @@ import { cookies } from "next/headers"
 import { LivePreview } from "@/components/editor/live-preview"
 import { ThemeProvider } from "@/lib/theme-context"
 import { notFound } from "next/navigation"
+import { getLandingPage } from "@/lib/api/landing-pages"
 
 export const dynamic = "force-dynamic"
 
 export default async function PreviewPage({ params }: { params: { id: string } }) {
-  const supabase = createServerComponentClient({ cookies })
+  const cookieStore = cookies()
+  const supabase = createServerComponentClient({ cookies: () => cookieStore })
 
-  // First try to get the page without authentication check
-  const { data: publicPage } = await supabase.from("landing_pages").select("*").eq("id", params.id).single()
+  try {
+    // First try to get the public page
+    let page = await getLandingPage(params.id)
 
-  // If the page is published, show it regardless of authentication
-  if (publicPage && publicPage.status === "published") {
+    if (!page) {
+      // If no public page found, check authentication and try to get the private page
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session) {
+        page = await getLandingPage(params.id, true)
+      }
+    }
+
+    if (!page) {
+      console.log("Page not found:", params.id)
+      notFound()
+    }
+
     return (
-      <ThemeProvider>
+      <ThemeProvider initialTheme={page.theme}>
         <div className="min-h-screen bg-background">
-          <LivePreview components={publicPage.content} />
+          <LivePreview components={page.content} />
         </div>
       </ThemeProvider>
     )
-  }
-
-  // If the page is not published, check authentication
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-muted-foreground">This page is private or does not exist.</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Get the page with authentication
-  const { data: privatePage, error: privateError } = await supabase
-    .from("landing_pages")
-    .select("*")
-    .eq("id", params.id)
-    .eq("user_id", session.user.id)
-    .single()
-
-  if (!privatePage || privateError) {
+  } catch (error) {
+    console.error("Error in PreviewPage:", error instanceof Error ? error.message : String(error))
     notFound()
   }
-
-  return (
-    <ThemeProvider>
-      <div className="min-h-screen bg-background">
-        <LivePreview components={privatePage.content} />
-      </div>
-    </ThemeProvider>
-  )
 }
 
