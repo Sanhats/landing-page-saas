@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { EditorCanvas } from "@/components/editor/editor-canvas"
 import { ComponentLibrary } from "@/components/editor/component-library"
@@ -31,6 +31,8 @@ import {
   GlobeIcon as GlobeOff,
   LayoutTemplateIcon as Template,
   ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -127,34 +129,42 @@ export default function EditorPage() {
     [historyIndex],
   )
 
-  const handleAddComponent = (type: ComponentType) => {
+  const handleAddComponent = useCallback((type: ComponentType) => {
     setSelectedComponentType(type)
     setShowTemplateSelector(true)
-  }
+  }, [])
 
-  const handleTemplateSelect = (template: ComponentTemplate) => {
-    const newComponent: EditorComponent = {
-      id: crypto.randomUUID(),
-      type: template.type,
-      content: { ...template.content },
-      template: template.id,
-      styles: { ...template.styles },
-    }
-    const newComponents = [...components, newComponent]
-    setComponents(newComponents)
-    addToHistory(newComponents)
-    setShowTemplateSelector(false)
-    setSelectedComponentType(null)
-  }
+  const handleTemplateSelect = useCallback(
+    (template: ComponentTemplate) => {
+      const newComponent: EditorComponent = {
+        id: crypto.randomUUID(),
+        type: template.type,
+        content: { ...template.content },
+        template: template.id,
+        styles: { ...template.styles },
+      }
+      setComponents((prevComponents) => {
+        const newComponents = [...prevComponents, newComponent]
+        addToHistory(newComponents)
+        return newComponents
+      })
+      setShowTemplateSelector(false)
+      setSelectedComponentType(null)
+    },
+    [addToHistory],
+  )
 
-  const handleEdit = (id: string) => {
-    const component = components.find((c) => c.id === id)
-    if (component) {
-      setEditingComponent(component)
-    }
-  }
+  const handleEdit = useCallback(
+    (id: string) => {
+      const component = components.find((c) => c.id === id)
+      if (component) {
+        setEditingComponent(component)
+      }
+    },
+    [components],
+  )
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setIsSaving(true)
     try {
       if (!pageData.title) {
@@ -182,9 +192,9 @@ export default function EditorPage() {
     } finally {
       setIsSaving(false)
     }
-  }
+  }, [pageId, pageData.title, components, theme, toast])
 
-  const handlePublish = async () => {
+  const handlePublish = useCallback(async () => {
     setIsPublishing(true)
     try {
       const publishedPage = await publishLandingPage(pageId)
@@ -203,9 +213,9 @@ export default function EditorPage() {
     } finally {
       setIsPublishing(false)
     }
-  }
+  }, [pageId, toast])
 
-  const handleUnpublish = async () => {
+  const handleUnpublish = useCallback(async () => {
     setIsPublishing(true)
     try {
       const unpublishedPage = await unpublishLandingPage(pageId)
@@ -224,71 +234,89 @@ export default function EditorPage() {
     } finally {
       setIsPublishing(false)
     }
-  }
+  }, [pageId, toast])
 
-  const handleReorder = (event: DragEndEvent) => {
-    const { active, over } = event
+  const handleReorder = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event
 
-    if (over && active.id !== over.id) {
-      const oldIndex = components.findIndex((item) => item.id === active.id)
-      const newIndex = components.findIndex((item) => item.id === over.id)
+      if (over && active.id !== over.id) {
+        setComponents((prevComponents) => {
+          const oldIndex = prevComponents.findIndex((item) => item.id === active.id)
+          const newIndex = prevComponents.findIndex((item) => item.id === over.id)
 
-      const newComponents = arrayMove(components, oldIndex, newIndex)
-      setComponents(newComponents)
-      addToHistory(newComponents)
-    }
-  }
-
-  const handleDuplicate = (id: string) => {
-    const componentToDuplicate = components.find((c) => c.id === id)
-    if (componentToDuplicate) {
-      const newComponent = {
-        ...componentToDuplicate,
-        id: crypto.randomUUID(),
+          const newComponents = arrayMove(prevComponents, oldIndex, newIndex)
+          addToHistory(newComponents)
+          return newComponents
+        })
       }
-      const newComponents = [...components, newComponent]
-      setComponents(newComponents)
-      addToHistory(newComponents)
-    }
-  }
+    },
+    [addToHistory],
+  )
 
-  const handleDelete = (id: string) => {
+  const handleDuplicate = useCallback(
+    (id: string) => {
+      setComponents((prevComponents) => {
+        const componentToDuplicate = prevComponents.find((c) => c.id === id)
+        if (componentToDuplicate) {
+          const newComponent = {
+            ...componentToDuplicate,
+            id: crypto.randomUUID(),
+          }
+          const newComponents = [...prevComponents, newComponent]
+          addToHistory(newComponents)
+          return newComponents
+        }
+        return prevComponents
+      })
+    },
+    [addToHistory],
+  )
+
+  const handleDelete = useCallback((id: string) => {
     setComponentToDelete(id)
     setDeleteConfirmOpen(true)
-  }
+  }, [])
 
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (componentToDelete) {
-      const newComponents = components.filter((c) => c.id !== componentToDelete)
-      setComponents(newComponents)
-      addToHistory(newComponents)
+      setComponents((prevComponents) => {
+        const newComponents = prevComponents.filter((c) => c.id !== componentToDelete)
+        addToHistory(newComponents)
+        return newComponents
+      })
       setDeleteConfirmOpen(false)
       setComponentToDelete(null)
     }
-  }
+  }, [componentToDelete, addToHistory])
 
-  const handleUndo = () => {
+  const handleUndo = useCallback(() => {
     if (historyIndex > 0) {
       setHistoryIndex((prev) => prev - 1)
       setComponents(history[historyIndex - 1])
     }
-  }
+  }, [history, historyIndex])
 
-  const handleRedo = () => {
+  const handleRedo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex((prev) => prev + 1)
       setComponents(history[historyIndex + 1])
     }
-  }
+  }, [history, historyIndex])
 
-  const handleUpdateComponent = (updatedComponent: EditorComponent) => {
-    const updatedComponents = components.map((c) => (c.id === updatedComponent.id ? updatedComponent : c))
-    setComponents(updatedComponents)
-    addToHistory(updatedComponents)
-    setEditingComponent(null)
-  }
+  const handleUpdateComponent = useCallback(
+    (updatedComponent: EditorComponent) => {
+      setComponents((prevComponents) => {
+        const updatedComponents = prevComponents.map((c) => (c.id === updatedComponent.id ? updatedComponent : c))
+        addToHistory(updatedComponents)
+        return updatedComponents
+      })
+      setEditingComponent(null)
+    },
+    [addToHistory],
+  )
 
-  const handleSaveAsTemplate = async () => {
+  const handleSaveAsTemplate = useCallback(async () => {
     if (!templateName) {
       toast({
         title: "Error",
@@ -314,9 +342,9 @@ export default function EditorPage() {
         variant: "destructive",
       })
     }
-  }
+  }, [pageId, templateName, toast])
 
-  const handlePreviewInNewTab = async () => {
+  const handlePreviewInNewTab = useCallback(async () => {
     try {
       await handleSave()
       window.open(`/preview/${pageId}`, "_blank")
@@ -328,7 +356,9 @@ export default function EditorPage() {
         variant: "destructive",
       })
     }
-  }
+  }, [handleSave, pageId, toast])
+
+  const memoizedComponents = useMemo(() => components, [components])
 
   if (isLoading) {
     return (
@@ -343,17 +373,23 @@ export default function EditorPage() {
       <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/pages">
+            <Link href="/dashboard/pages" aria-label="Back to pages">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <h1 className="text-lg font-semibold">{pageData.title || "Untitled Page"}</h1>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0}>
+          <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0} aria-label="Undo">
             <Undo className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1}
+            aria-label="Redo"
+          >
             <Redo className="h-4 w-4" />
           </Button>
           <Button variant="outline" size="sm" onClick={() => setActiveTab(activeTab === "edit" ? "preview" : "edit")}>
@@ -425,7 +461,7 @@ export default function EditorPage() {
         <div className="flex-1 relative">
           {activeTab === "edit" ? (
             <EditorCanvas
-              components={components}
+              components={memoizedComponents}
               onEdit={handleEdit}
               onReorder={handleReorder}
               onDuplicate={handleDuplicate}
@@ -435,7 +471,7 @@ export default function EditorPage() {
             <>
               <PreviewToolbar mode={previewMode} onModeChange={setPreviewMode} />
               <PreviewFrame mode={previewMode}>
-                <LivePreview components={components} />
+                <LivePreview components={memoizedComponents} />
               </PreviewFrame>
             </>
           )}
@@ -537,6 +573,26 @@ export default function EditorPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Sidebar toggle buttons */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed left-2 top-1/2 -translate-y-1/2 z-50"
+        onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
+        aria-label={leftSidebarOpen ? "Close left sidebar" : "Open left sidebar"}
+      >
+        {leftSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="fixed right-2 top-1/2 -translate-y-1/2 z-50"
+        onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+        aria-label={rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"}
+      >
+        {rightSidebarOpen ? <ChevronRight /> : <ChevronLeft />}
+      </Button>
     </div>
   )
 }

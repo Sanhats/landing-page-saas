@@ -35,6 +35,6 @@ export function LivePreview({ components }: LivePreviewProps) {
     }
   }
 
-  return <div className="w-full">{components.map(renderComponent)}</div>
+  return <div className="w-full mx-auto max-w-5xl space-y-8 p-4">{components.map(renderComponent)}</div>
 }
 

@@ -1,5 +1,4 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
 interface LandingPage {
   id: string
@@ -14,13 +13,18 @@ interface LandingPage {
 }
 
 export async function saveLandingPage(pageData: Partial<LandingPage>): Promise<LandingPage> {
-  const supabase = createServerComponentClient({ cookies: () => cookies() })
+  const supabase = createClientComponentClient()
   try {
-    if (!pageData.title) {
-      throw new Error("Title is required")
+    if (!pageData.id) {
+      throw new Error("Page ID is required for updates")
     }
 
-    const { data, error } = await supabase.from("landing_pages").upsert(pageData).select().single()
+    const { data, error } = await supabase
+      .from("landing_pages")
+      .update(pageData)
+      .eq("id", pageData.id)
+      .select()
+      .single()
 
     if (error) {
       console.error("Supabase error:", error)
@@ -39,8 +43,7 @@ export async function saveLandingPage(pageData: Partial<LandingPage>): Promise<L
 }
 
 export async function getLandingPage(id: string, includePrivate = false): Promise<LandingPage | null> {
-  const cookieStore = cookies()
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
+  const supabase = createClientComponentClient()
 
   try {
     let query = supabase.from("landing_pages").select("*").eq("id", id).single()
@@ -68,13 +71,18 @@ export async function getLandingPage(id: string, includePrivate = false): Promis
 }
 
 export async function listLandingPages(): Promise<LandingPage[]> {
-  const supabase = createServerComponentClient({ cookies: () => cookies() })
+  const supabase = createClientComponentClient()
 
   try {
-    const { data, error } = await supabase.from("landing_pages").select("*").order("updatedAt", { ascending: false })
+    const { data, error } = await supabase.from("landing_pages").select("*").order("updated_at", { ascending: false })
 
     if (error) {
-      throw error
+      console.error("Supabase error:", error)
+      throw new Error(`Supabase error: ${error.message}`)
+    }
+
+    if (!data) {
+      return []
     }
 
     return data as LandingPage[]
@@ -85,7 +93,7 @@ export async function listLandingPages(): Promise<LandingPage[]> {
 }
 
 export async function publishLandingPage(id: string): Promise<LandingPage> {
-  const supabase = createServerComponentClient({ cookies: () => cookies() })
+  const supabase = createClientComponentClient()
 
   try {
     const { data, error } = await supabase
@@ -107,7 +115,7 @@ export async function publishLandingPage(id: string): Promise<LandingPage> {
 }
 
 export async function unpublishLandingPage(id: string): Promise<LandingPage> {
-  const supabase = createServerComponentClient({ cookies: () => cookies() })
+  const supabase = createClientComponentClient()
 
   try {
     const { data, error } = await supabase
@@ -129,7 +137,7 @@ export async function unpublishLandingPage(id: string): Promise<LandingPage> {
 }
 
 export async function saveAsTemplate(pageId: string, templateName: string): Promise<void> {
-  const supabase = createServerComponentClient({ cookies: () => cookies() })
+  const supabase = createClientComponentClient()
 
   try {
     const { data: page, error: pageError } = await supabase.from("landing_pages").select("*").eq("id", pageId).single()
@@ -154,7 +162,7 @@ export async function saveAsTemplate(pageId: string, templateName: string): Prom
 }
 
 export async function getTemplates() {
-  const supabase = createServerComponentClient({ cookies: () => cookies() })
+  const supabase = createClientComponentClient()
 
   try {
     const { data, error } = await supabase.from("templates").select("*").order("created_at", { ascending: false })
@@ -166,6 +174,21 @@ export async function getTemplates() {
     return data
   } catch (error) {
     console.error("Error fetching templates:", error)
+    throw error
+  }
+}
+
+export async function deleteLandingPage(id: string): Promise<void> {
+  const supabase = createClientComponentClient()
+
+  try {
+    const { error } = await supabase.from("landing_pages").delete().eq("id", id)
+
+    if (error) {
+      throw error
+    }
+  } catch (error) {
+    console.error("Error deleting landing page:", error)
     throw error
   }
 }

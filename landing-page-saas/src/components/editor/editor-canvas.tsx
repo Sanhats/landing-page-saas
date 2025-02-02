@@ -1,4 +1,6 @@
 "use client"
+
+import { useState } from "react"
 import {
   DndContext,
   closestCenter,
@@ -14,7 +16,7 @@ import { CSS } from "@dnd-kit/utilities"
 import type { EditorComponent } from "@/types/editor"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { GripVertical, Edit, Copy, Trash2 } from "lucide-react"
+import { GripVertical, Edit, Copy, Trash2, Eye } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HeroTemplate } from "@/components/editor/templates/hero-template"
 import { FeaturesTemplate } from "@/components/editor/templates/features-template"
@@ -23,6 +25,7 @@ import { TestimonialsTemplate } from "@/components/editor/templates/testimonials
 import { PricingTemplate } from "@/components/editor/templates/pricing-template"
 import { FAQTemplate } from "@/components/editor/templates/faq-template"
 import { ContactTemplate } from "@/components/editor/templates/contact-template"
+import { LivePreview } from "@/components/editor/live-preview"
 
 interface EditorCanvasProps {
   components: EditorComponent[]
@@ -109,6 +112,7 @@ function SortableComponent({
 }
 
 export function EditorCanvas({ components, onEdit, onReorder, onDuplicate, onDelete }: EditorCanvasProps) {
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -131,21 +135,36 @@ export function EditorCanvas({ components, onEdit, onReorder, onDuplicate, onDel
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <div className="mx-auto w-full max-w-5xl space-y-4 p-4">
-        <SortableContext items={components} strategy={verticalListSortingStrategy}>
-          {components.map((component) => (
-            <SortableComponent
-              key={component.id}
-              component={component}
-              onEdit={onEdit}
-              onDuplicate={onDuplicate}
-              onDelete={onDelete}
-            />
-          ))}
-        </SortableContext>
-      </div>
-    </DndContext>
+    <div className="relative">
+      <Button
+        variant="outline"
+        size="sm"
+        className="absolute right-4 top-4 z-10"
+        onClick={() => setIsPreviewMode(!isPreviewMode)}
+      >
+        <Eye className="mr-2 h-4 w-4" />
+        {isPreviewMode ? "Edit Mode" : "Preview Mode"}
+      </Button>
+      {isPreviewMode ? (
+        <LivePreview components={components} />
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <div className="mx-auto w-full max-w-5xl space-y-4 p-4">
+            <SortableContext items={components} strategy={verticalListSortingStrategy}>
+              {components.map((component) => (
+                <SortableComponent
+                  key={component.id}
+                  component={component}
+                  onEdit={onEdit}
+                  onDuplicate={onDuplicate}
+                  onDelete={onDelete}
+                />
+              ))}
+            </SortableContext>
+          </div>
+        </DndContext>
+      )}
+    </div>
   )
 }
 

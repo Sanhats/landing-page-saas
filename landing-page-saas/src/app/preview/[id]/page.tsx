@@ -1,28 +1,21 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
 import { LivePreview } from "@/components/editor/live-preview"
 import { ThemeProvider } from "@/lib/theme-context"
 import { notFound } from "next/navigation"
-import { getLandingPage } from "@/lib/api/landing-pages"
+import { getServerLandingPage, getServerSession } from "@/lib/api/server-landing-pages"
 
 export const dynamic = "force-dynamic"
 
 export default async function PreviewPage({ params }: { params: { id: string } }) {
-  const cookieStore = cookies()
-  const supabase = createServerComponentClient({ cookies: () => cookieStore })
-
   try {
     // First try to get the public page
-    let page = await getLandingPage(params.id)
+    let page = await getServerLandingPage(params.id)
 
     if (!page) {
       // If no public page found, check authentication and try to get the private page
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const session = await getServerSession()
 
       if (session) {
-        page = await getLandingPage(params.id, true)
+        page = await getServerLandingPage(params.id, true)
       }
     }
 
