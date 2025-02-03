@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 
 export interface Theme {
   colors: {
@@ -84,8 +84,18 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme)
+export function ThemeProvider({
+  children,
+  initialTheme = defaultTheme,
+}: { children: React.ReactNode; initialTheme?: Theme }) {
+  const [theme, setTheme] = useState<Theme>(initialTheme)
+
+  useEffect(() => {
+    // Actualizar las variables CSS cuando el tema cambie
+    Object.entries(theme.colors).forEach(([key, value]) => {
+      document.documentElement.style.setProperty(`--color-${key}`, value)
+    })
+  }, [theme])
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
 }

@@ -1,17 +1,15 @@
+import { notFound } from "next/navigation"
+import { getLandingPage } from "@/lib/api/landing-pages"
 import { LivePreview } from "@/components/editor/live-preview"
 import { ThemeProvider } from "@/lib/theme-context"
-import { notFound } from "next/navigation"
-import { getServerLandingPage } from "@/lib/api/server-landing-pages"
 
 export const dynamic = "force-dynamic"
-export const revalidate = 0
 
-export default async function PreviewPage({ params }: { params: { id: string } }) {
+export default async function PublishedPage({ params }: { params: { slug: string } }) {
   try {
-    const page = await getServerLandingPage(params.id, true)
+    const page = await getLandingPage(params.slug)
 
     if (!page) {
-      console.log("Page not found:", params.id)
       notFound()
     }
 
@@ -23,7 +21,7 @@ export default async function PreviewPage({ params }: { params: { id: string } }
       </ThemeProvider>
     )
   } catch (error) {
-    console.error("Error in PreviewPage:", error instanceof Error ? error.message : String(error))
+    console.error("Error in PublishedPage:", error instanceof Error ? error.message : String(error))
     notFound()
   }
 }

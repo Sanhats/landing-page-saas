@@ -70,7 +70,6 @@ export function FeaturesTemplate({ content, onEdit }: FeaturesTemplateProps) {
                   }}
                 >
                   <div className="relative p-6">
-                    <Icon className="h-12 w-12 mb-4" style={{ color: theme.colors.accent }} />
                     <h3
                       className="text-xl font-semibold"
                       style={{ color: theme.colors.primary, fontFamily: theme.typography.fontFamily.sans }}

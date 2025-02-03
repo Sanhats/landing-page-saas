@@ -1,5 +1,6 @@
 "use client"
 
+import { ThemeProvider, useTheme } from "@/lib/theme-context"
 import { HeroTemplate } from "@/components/editor/templates/hero-template"
 import { FeaturesTemplate } from "@/components/editor/templates/features-template"
 import { ContentTemplate } from "@/components/editor/templates/content-template"
@@ -14,6 +15,8 @@ interface LivePreviewProps {
 }
 
 export function LivePreview({ components }: LivePreviewProps) {
+  const { theme } = useTheme()
+
   const renderComponent = (component: EditorComponent) => {
     switch (component.type) {
       case "hero":
@@ -35,6 +38,10 @@ export function LivePreview({ components }: LivePreviewProps) {
     }
   }
 
-  return <div className="w-full mx-auto max-w-5xl space-y-8 p-4">{components.map(renderComponent)}</div>
+  return (
+    <ThemeProvider initialTheme={theme}>
+      <div className="w-full">{components.map(renderComponent)}</div>
+    </ThemeProvider>
+  )
 }
 

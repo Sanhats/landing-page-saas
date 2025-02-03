@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useTheme } from "@/lib/theme-context"
+import { useTheme, type Theme } from "@/lib/theme-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,7 @@ export function ThemeCustomizer({ pageId }: { pageId: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
 
-  const handleColorChange = (colorKey: keyof typeof theme.colors) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleColorChange = (colorKey: keyof Theme["colors"]) => (e: React.ChangeEvent<HTMLInputElement>) => {
     setTheme((prevTheme) => ({
       ...prevTheme,
       colors: {
@@ -129,7 +129,7 @@ export function ThemeCustomizer({ pageId }: { pageId: string }) {
                       id={`color-${key}`}
                       type="color"
                       value={value}
-                      onChange={handleColorChange(key as keyof typeof theme.colors)}
+                      onChange={handleColorChange(key as keyof Theme["colors"])}
                       className="w-full h-8"
                     />
                     <Button

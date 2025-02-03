@@ -45,7 +45,7 @@ export function PageList() {
 
   useEffect(() => {
     fetchPages()
-  }, []) //Fixed: Added empty dependency array to useEffect
+  }, []) //Fixed useEffect dependency issue
 
   const handleDelete = async () => {
     if (!pageToDelete) return
@@ -124,9 +124,9 @@ export function PageList() {
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </Button>
-                {page.status === "published" && (
+                {page.status === "published" && page.slug && (
                   <Button size="sm" variant="outline" asChild>
-                    <a href={`/preview/${page.id}`} target="_blank" rel="noopener noreferrer">
+                    <a href={`/p/${page.slug}`} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View
                     </a>

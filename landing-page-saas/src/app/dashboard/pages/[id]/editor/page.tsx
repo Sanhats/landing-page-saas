@@ -33,6 +33,7 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  Copy,
 } from "lucide-react"
 import Link from "next/link"
 import {
@@ -46,7 +47,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { useTheme } from "@/lib/theme-context"
+import { useTheme, ThemeProvider } from "@/lib/theme-context"
 import { cn } from "@/lib/utils"
 import { PreviewToolbar } from "@/components/editor/preview-toolbar"
 import { PreviewFrame } from "@/components/editor/preview-frame"
@@ -94,10 +95,55 @@ export default function EditorPage() {
       const page = await getLandingPage(pageId, true)
       if (page) {
         setPageData(page)
-        if (page.content && Array.isArray(page.content)) {
+        if (page.content && Array.isArray(page.content) && page.content.length > 0) {
           setComponents(page.content as EditorComponent[])
           setHistory([page.content as EditorComponent[]])
           setHistoryIndex(0)
+        } else {
+          // Si no hay contenido o está vacío, establecemos componentes predeterminados
+          const defaultComponents: EditorComponent[] = [
+            {
+              id: crypto.randomUUID(),
+              type: "hero",
+              content: {
+                title: "Welcome to Your New Landing Page",
+                description: "This is a default hero section. Customize it to fit your needs.",
+                buttonText: "Get Started",
+              },
+            },
+            {
+              id: crypto.randomUUID(),
+              type: "features",
+              content: {
+                title: "Our Features",
+                description: "Here are some key features of our product or service.",
+                features: [
+                  {
+                    title: "Feature 1",
+                    description: "Description of feature 1",
+                    icon: "Zap",
+                  },
+                  {
+                    title: "Feature 2",
+                    description: "Description of feature 2",
+                    icon: "Heart",
+                  },
+                ],
+              },
+            },
+          ]
+          setComponents(defaultComponents)
+          setHistory([defaultComponents])
+          setHistoryIndex(0)
+
+          // Guardar los componentes predeterminados en la base de datos
+          await saveLandingPage({
+            id: pageId,
+            title: page.title,
+            description: page.description,
+            content: defaultComponents,
+            status: page.status,
+          })
         }
         if (page.theme) {
           setTheme(page.theme as Theme)
@@ -174,14 +220,19 @@ export default function EditorPage() {
       const updatedPage = await saveLandingPage({
         id: pageId,
         title: pageData.title,
+        description: pageData.description,
         content: components,
         theme: theme,
+        status: pageData.status,
       })
       setPageData(updatedPage)
       toast({
         title: "Success",
         description: "Page saved successfully.",
       })
+
+      // Forzar una recarga de la página después de guardar
+      await loadPage()
     } catch (error) {
       console.error("Error saving page:", error)
       toast({
@@ -192,7 +243,7 @@ export default function EditorPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [pageId, pageData.title, components, theme, toast])
+  }, [pageId, pageData.title, pageData.description, pageData.status, components, theme, toast, loadPage])
 
   const handlePublish = useCallback(async () => {
     setIsPublishing(true)
@@ -235,6 +286,28 @@ export default function EditorPage() {
       setIsPublishing(false)
     }
   }, [pageId, toast])
+
+  const copyToClipboard = useCallback(
+    (text: string) => {
+      navigator.clipboard.writeText(text).then(
+        () => {
+          toast({
+            title: "Copied!",
+            description: "The URL has been copied to your clipboard.",
+          })
+        },
+        (err) => {
+          console.error("Could not copy text: ", err)
+          toast({
+            title: "Error",
+            description: "Failed to copy URL. Please try again.",
+            variant: "destructive",
+          })
+        },
+      )
+    },
+    [toast],
+  )
 
   const handleReorder = useCallback(
     (event: DragEndEvent) => {
@@ -369,231 +442,246 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/pages" aria-label="Back to pages">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-lg font-semibold">{pageData.title || "Untitled Page"}</h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0} aria-label="Undo">
-            <Undo className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleRedo}
-            disabled={historyIndex >= history.length - 1}
-            aria-label="Redo"
-          >
-            <Redo className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setActiveTab(activeTab === "edit" ? "preview" : "edit")}>
-            <Eye className="mr-2 h-4 w-4" />
-            {activeTab === "edit" ? "Preview" : "Edit"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePreviewInNewTab}>
-            <ExternalLink className="mr-2 h-4 w-4" />
-            Preview in New Tab
-          </Button>
-          <Button size="sm" onClick={handleSave} disabled={isSaving}>
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-          <Button
-            size="sm"
-            variant={pageData.status === "published" ? "destructive" : "default"}
-            onClick={pageData.status === "published" ? handleUnpublish : handlePublish}
-            disabled={isPublishing}
-          >
-            {pageData.status === "published" ? (
-              <GlobeOff className="mr-2 h-4 w-4" />
-            ) : (
-              <Globe className="mr-2 h-4 w-4" />
-            )}
-            {isPublishing ? "Processing..." : pageData.status === "published" ? "Unpublish" : "Publish"}
-          </Button>
-          <ExportHtmlButton pageId={pageId} />
-          <Button variant="outline" size="sm" onClick={() => setSaveAsTemplateOpen(true)}>
-            <Template className="mr-2 h-4 w-4" />
-            Save as Template
-          </Button>
-        </div>
-      </header>
-
-      <div className="px-4 py-2 bg-background">
-        <Input
-          type="text"
-          placeholder="Page Title"
-          value={pageData.title}
-          onChange={(e) => setPageData((prev) => ({ ...prev, title: e.target.value }))}
-          className="max-w-md"
-        />
-      </div>
-
-      <div className="flex-1 flex">
-        {/* Left Sidebar */}
-        <div
-          className={cn(
-            "w-64 border-r bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
-            !leftSidebarOpen && "-translate-x-full",
-          )}
-        >
-          <Tabs defaultValue="components" className="h-full flex flex-col">
-            <TabsList className="w-full justify-start px-4 border-b rounded-none h-12">
-              <TabsTrigger value="components">Components</TabsTrigger>
-              <TabsTrigger value="templates">Templates</TabsTrigger>
-            </TabsList>
-            <TabsContent value="components" className="flex-1 p-0">
-              <ComponentLibrary onAddComponent={handleAddComponent} />
-            </TabsContent>
-            <TabsContent value="templates" className="flex-1 p-0">
-              <TemplateLibrary onApplyTemplate={(template) => setComponents(template.content)} />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 relative">
-          {activeTab === "edit" ? (
-            <EditorCanvas
-              components={memoizedComponents}
-              onEdit={handleEdit}
-              onReorder={handleReorder}
-              onDuplicate={handleDuplicate}
-              onDelete={handleDelete}
-            />
-          ) : (
-            <>
-              <PreviewToolbar mode={previewMode} onModeChange={setPreviewMode} />
-              <PreviewFrame mode={previewMode}>
-                <LivePreview components={memoizedComponents} />
-              </PreviewFrame>
-            </>
-          )}
-        </div>
-
-        {/* Right Sidebar */}
-        <div
-          className={cn(
-            "w-80 border-l bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
-            !rightSidebarOpen && "translate-x-full",
-          )}
-        >
-          <Tabs defaultValue="theme" className="h-full flex flex-col">
-            <TabsList className="w-full justify-start px-4 border-b rounded-none h-12">
-              <TabsTrigger value="theme">Theme</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-            <TabsContent value="theme" className="flex-1 p-4">
-              <ThemeCustomizer pageId={pageId} />
-            </TabsContent>
-            <TabsContent value="settings" className="flex-1 p-4">
-              {/* Add page settings component here */}
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
-
-      <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
-        <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>
-              Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
-            </DialogTitle>
-          </DialogHeader>
-          <ScrollArea className="max-h-[70vh] pr-4">
-            {editingComponent && <ComponentEditForm component={editingComponent} onSave={handleUpdateComponent} />}
-          </ScrollArea>
-          <DialogFooter>
-            <Button onClick={() => setEditingComponent(null)}>Close</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this component? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
-              Cancel
+    <ThemeProvider initialTheme={pageData.theme || undefined}>
+      <div className="h-screen flex flex-col bg-background">
+        <header className="border-b px-4 h-14 flex items-center justify-between shrink-0 bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/dashboard/pages" aria-label="Back to pages">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={saveAsTemplateOpen} onOpenChange={setSaveAsTemplateOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Save as Template</DialogTitle>
-            <DialogDescription>Enter a name for your new template.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="template-name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="template-name"
-                value={templateName}
-                onChange={(e) => setTemplateName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
+            <h1 className="text-lg font-semibold">{pageData.title || "Untitled Page"}</h1>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveAsTemplateOpen(false)}>
-              Cancel
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={handleUndo} disabled={historyIndex <= 0} aria-label="Undo">
+              <Undo className="h-4 w-4" />
             </Button>
-            <Button onClick={handleSaveAsTemplate}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleRedo}
+              disabled={historyIndex >= history.length - 1}
+              aria-label="Redo"
+            >
+              <Redo className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setActiveTab(activeTab === "edit" ? "preview" : "edit")}>
+              <Eye className="mr-2 h-4 w-4" />
+              {activeTab === "edit" ? "Preview" : "Edit"}
+            </Button>
+            <Button variant="outline" size="sm" onClick={handlePreviewInNewTab}>
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Preview in New Tab
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+            <Button
+              size="sm"
+              variant={pageData.status === "published" ? "destructive" : "default"}
+              onClick={pageData.status === "published" ? handleUnpublish : handlePublish}
+              disabled={isPublishing}
+            >
+              {pageData.status === "published" ? (
+                <GlobeOff className="mr-2 h-4 w-4" />
+              ) : (
+                <Globe className="mr-2 h-4 w-4" />
+              )}
+              {isPublishing ? "Processing..." : pageData.status === "published" ? "Unpublish" : "Publish"}
+            </Button>
+            {pageData.status === "published" && pageData.slug && (
+              <div className="flex items-center gap-2">
+                <Input value={`${window.location.origin}/p/${pageData.slug}`} readOnly className="w-64" />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(`${window.location.origin}/p/${pageData.slug}`)}
+                >
+                  <Copy className="h-4 w-4" />
+                  <span className="sr-only">Copy URL</span>
+                </Button>
+              </div>
+            )}
+            <ExportHtmlButton pageId={pageId} />
+            <Button variant="outline" size="sm" onClick={() => setSaveAsTemplateOpen(true)}>
+              <Template className="mr-2 h-4 w-4" />
+              Save as Template
+            </Button>
+          </div>
+        </header>
 
-      <Dialog open={showTemplateSelector} onOpenChange={setShowTemplateSelector}>
-        <DialogContent className="max-w-4xl">
-          {selectedComponentType && (
-            <TemplateSelector
-              type={selectedComponentType}
-              onSelect={handleTemplateSelect}
-              onClose={() => setShowTemplateSelector(false)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+        <div className="px-4 py-2 bg-background">
+          <Input
+            type="text"
+            placeholder="Page Title"
+            value={pageData.title}
+            onChange={(e) => setPageData((prev) => ({ ...prev, title: e.target.value }))}
+            className="max-w-md"
+          />
+        </div>
 
-      {/* Sidebar toggle buttons */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed left-2 top-1/2 -translate-y-1/2 z-50"
-        onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
-        aria-label={leftSidebarOpen ? "Close left sidebar" : "Open left sidebar"}
-      >
-        {leftSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed right-2 top-1/2 -translate-y-1/2 z-50"
-        onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
-        aria-label={rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"}
-      >
-        {rightSidebarOpen ? <ChevronRight /> : <ChevronLeft />}
-      </Button>
-    </div>
+        <div className="flex-1 flex">
+          {/* Left Sidebar */}
+          <div
+            className={cn(
+              "w-64 border-r bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
+              !leftSidebarOpen && "-translate-x-full",
+            )}
+          >
+            <Tabs defaultValue="components" className="h-full flex flex-col">
+              <TabsList className="w-full justify-start px-4 border-b rounded-none h-12">
+                <TabsTrigger value="components">Components</TabsTrigger>
+                <TabsTrigger value="templates">Templates</TabsTrigger>
+              </TabsList>
+              <TabsContent value="components" className="flex-1 p-0">
+                <ComponentLibrary onAddComponent={handleAddComponent} />
+              </TabsContent>
+              <TabsContent value="templates" className="flex-1 p-0">
+                <TemplateLibrary onApplyTemplate={(template) => setComponents(template.content)} />
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1 relative">
+            {activeTab === "edit" ? (
+              <EditorCanvas
+                components={memoizedComponents}
+                onEdit={handleEdit}
+                onReorder={handleReorder}
+                onDuplicate={handleDuplicate}
+                onDelete={handleDelete}
+              />
+            ) : (
+              <>
+                <PreviewToolbar mode={previewMode} onModeChange={setPreviewMode} />
+                <PreviewFrame mode={previewMode}>
+                  <LivePreview components={memoizedComponents} />
+                </PreviewFrame>
+              </>
+            )}
+          </div>
+
+          {/* Right Sidebar */}
+          <div
+            className={cn(
+              "w-80 border-l bg-[#0a192f]/95 backdrop-blur supports-[backdrop-filter]:bg-[#0a192f]/60 transition-all duration-300 ease-in-out",
+              !rightSidebarOpen && "translate-x-full",
+            )}
+          >
+            <Tabs defaultValue="theme" className="h-full flex flex-col">
+              <TabsList className="w-full justify-start px-4 border-b rounded-none h-12">
+                <TabsTrigger value="theme">Theme</TabsTrigger>
+                <TabsTrigger value="settings">Settings</TabsTrigger>
+              </TabsList>
+              <TabsContent value="theme" className="flex-1 p-4">
+                <ThemeCustomizer pageId={pageId} />
+              </TabsContent>
+              <TabsContent value="settings" className="flex-1 p-4">
+                {/* Add page settings component here */}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
+
+        <Dialog open={!!editingComponent} onOpenChange={() => setEditingComponent(null)}>
+          <DialogContent className="max-h-[90vh] w-[90vw] max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                Edit {editingComponent?.type.charAt(0).toUpperCase() + editingComponent?.type.slice(1)}
+              </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="max-h-[70vh] pr-4">
+              {editingComponent && <ComponentEditForm component={editingComponent} onSave={handleUpdateComponent} />}
+            </ScrollArea>
+            <DialogFooter>
+              <Button onClick={() => setEditingComponent(null)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this component? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={confirmDelete}>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={saveAsTemplateOpen} onOpenChange={setSaveAsTemplateOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Save as Template</DialogTitle>
+              <DialogDescription>Enter a name for your new template.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="template-name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="template-name"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setSaveAsTemplateOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveAsTemplate}>Save</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showTemplateSelector} onOpenChange={setShowTemplateSelector}>
+          <DialogContent className="max-w-4xl">
+            {selectedComponentType && (
+              <TemplateSelector
+                type={selectedComponentType}
+                onSelect={handleTemplateSelect}
+                onClose={() => setShowTemplateSelector(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Sidebar toggle buttons */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed left-2 top-1/2 -translate-y-1/2 z-50"
+          onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}
+          aria-label={leftSidebarOpen ? "Close left sidebar" : "Open left sidebar"}
+        >
+          {leftSidebarOpen ? <ChevronLeft /> : <ChevronRight />}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="fixed right-2 top-1/2 -translate-y-1/2 z-50"
+          onClick={() => setRightSidebarOpen(!rightSidebarOpen)}
+          aria-label={rightSidebarOpen ? "Close right sidebar" : "Open right sidebar"}
+        >
+          {rightSidebarOpen ? <ChevronRight /> : <ChevronLeft />}
+        </Button>
+      </div>
+    </ThemeProvider>
   )
 }
 

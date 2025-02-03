@@ -1,5 +1,19 @@
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 
+function generateUUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+interface EditorComponent {
+  id: string
+  type: string
+  content: any
+}
+
 interface LandingPage {
   id: string
   title: string
@@ -15,14 +29,21 @@ interface LandingPage {
 export async function saveLandingPage(pageData: Partial<LandingPage>): Promise<LandingPage> {
   const supabase = createClientComponentClient()
   try {
-    if (!pageData.id) {
-      throw new Error("Page ID is required for updates")
+    if (!pageData.title) {
+      throw new Error("Title is required")
     }
 
     const { data, error } = await supabase
       .from("landing_pages")
-      .update(pageData)
-      .eq("id", pageData.id)
+      .upsert({
+        id: pageData.id,
+        title: pageData.title,
+        description: pageData.description,
+        content: pageData.content || [], // Asegurarse de que content sea un array
+        status: pageData.status,
+        theme: pageData.theme,
+        updated_at: new Date().toISOString(),
+      })
       .select()
       .single()
 
@@ -35,24 +56,100 @@ export async function saveLandingPage(pageData: Partial<LandingPage>): Promise<L
       throw new Error("No data returned from Supabase")
     }
 
-    return data
+    return data as LandingPage
   } catch (error) {
     console.error("Error in saveLandingPage:", error)
     throw error
   }
 }
 
-export async function getLandingPage(id: string, includePrivate = false): Promise<LandingPage | null> {
+export async function createLandingPage(pageData: { title: string; description?: string }): Promise<LandingPage> {
+  const supabase = createClientComponentClient()
+  try {
+    if (!pageData.title) {
+      throw new Error("Title is required")
+    }
+
+    const defaultComponents: EditorComponent[] = [
+      {
+        id: generateUUID(),
+        type: "hero",
+        content: {
+          title: "Welcome to Your New Landing Page",
+          description: "This is a default hero section. Customize it to fit your needs.",
+          buttonText: "Get Started",
+        },
+      },
+      {
+        id: generateUUID(),
+        type: "features",
+        content: {
+          title: "Our Features",
+          description: "Here are some key features of our product or service.",
+          features: [
+            {
+              title: "Feature 1",
+              description: "Description of feature 1",
+              icon: "Zap",
+            },
+            {
+              title: "Feature 2",
+              description: "Description of feature 2",
+              icon: "Heart",
+            },
+          ],
+        },
+      },
+    ]
+
+    const { data, error } = await supabase
+      .from("landing_pages")
+      .insert({
+        title: pageData.title,
+        description: pageData.description,
+        content: defaultComponents,
+        status: "draft",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error("Supabase error:", error)
+      throw new Error(`Supabase error: ${error.message}`)
+    }
+
+    if (!data) {
+      throw new Error("No data returned from Supabase")
+    }
+
+    return data as LandingPage
+  } catch (error) {
+    console.error("Error in createLandingPage:", error)
+    throw error
+  }
+}
+
+export async function getLandingPage(idOrSlug: string, includePrivate = false): Promise<LandingPage | null> {
   const supabase = createClientComponentClient()
 
   try {
-    let query = supabase.from("landing_pages").select("*").eq("id", id).single()
+    let query = supabase.from("landing_pages").select("*")
+
+    if (idOrSlug.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/)) {
+      // If it's a UUID, search by id
+      query = query.eq("id", idOrSlug)
+    } else {
+      // Otherwise, search by slug
+      query = query.eq("slug", idOrSlug)
+    }
 
     if (!includePrivate) {
       query = query.eq("status", "published")
     }
 
-    const { data: page, error } = await query
+    const { data: page, error } = await query.single()
 
     if (error) {
       console.error("Error fetching landing page:", error.message, error.details)
